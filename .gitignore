@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+/archive
+/exercices_generation/assets
+/exercices_generation/coachs_fbx
+/exercices_generation/outputs
+/exercices_generation/temp
+
+exercices_generation/coachs_fbx/.gitkeep
+exercices_generation/outputs/.gitkeep
+exercices_generation/temp/.gitkeep
