@@ -18,3 +18,7 @@ wheels/
 exercices_generation/coachs_fbx/.gitkeep
 exercices_generation/outputs/.gitkeep
 exercices_generation/temp/.gitkeep
+
+.DS_Store
+.rooignore
+exercices_generation/.DS_Store
