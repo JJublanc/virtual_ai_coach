@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
+from .api import exercises
+
 app = FastAPI(
     title="Virtual AI Coach Backend",
     description="Backend for generating personalized workout videos",
@@ -16,6 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Inclusion des routers
+app.include_router(exercises.router)
 
 
 @app.get("/", tags=["Root"])
