@@ -40,7 +40,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - [x] Créer branches : `main`, `dev`, `feat/*`
 - [x] Configurer protection branche `main`
 - [x] Ajouter README.md avec instructions setup
-- [ ] Installer et configurer les précommit
+- [x] Installer et configurer les précommit
 
 
 **Critères d'acceptation :**
@@ -130,11 +130,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer le service de génération vidéo avec FFmpeg
 
 **Tâches :**
-- [ ] Créer `services/video_service.py`
-- [ ] Implémenter `build_ffmpeg_command()` pour concaténation
-- [ ] Implémenter `apply_speed_adjustment()` selon intensité
-- [ ] Tester avec 2 vidéos MOV du dossier `exercices_generation/outputs/`
-- [ ] Ajouter logs détaillés pour debugging
+- [x] Créer `services/video_service.py`
+- [x] Implémenter `build_ffmpeg_command()` pour concaténation
+- [x] Implémenter `apply_speed_adjustment()` selon intensité
+- [x] Tester avec 2 vidéos MOV du dossier `exercices_generation/outputs/`
+- [x] Ajouter logs détaillés pour debugging
 
 **Critères d'acceptation :**
 - ✅ Concaténation de 2 vidéos fonctionne
@@ -149,12 +149,12 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer endpoint de génération vidéo en streaming
 
 **Tâches :**
-- [ ] Créer route POST `/api/generate-workout-video`
-- [ ] Recevoir configuration workout en JSON
-- [ ] Appeler video_service pour générer vidéo
-- [ ] Streamer la sortie FFmpeg via StreamingResponse
-- [ ] Gérer les erreurs (timeout, fichiers manquants)
-- [ ] Tester avec Postman/curl
+- [x] Créer route POST `/api/generate-workout-video`
+- [x] Recevoir configuration workout en JSON
+- [x] Appeler video_service pour générer vidéo
+- [x] Streamer la sortie FFmpeg via StreamingResponse
+- [x] Gérer les erreurs (timeout, fichiers manquants)
+- [x] Tester avec Postman/curl
 
 **Critères d'acceptation :**
 - ✅ Endpoint retourne vidéo MP4 streamée

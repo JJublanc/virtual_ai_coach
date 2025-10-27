@@ -22,3 +22,5 @@ exercices_generation/temp/.gitkeep
 .DS_Store
 .rooignore
 exercices_generation/.DS_Store
+
+backend/*.mp4
