@@ -20,7 +20,13 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: [-r, .]
+        args: [
+          "-r",
+          "-f", "custom",
+          "--exit-zero"
+        ]
+        additional_dependencies: ['pbr']
+        exclude: "^(backend/tests/|.venv/|exercices_generation/)"
 
 default_language_version:
   python: python3

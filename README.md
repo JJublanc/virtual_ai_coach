@@ -208,6 +208,35 @@ virtual-ai-coach/
 
 ---
 
+## 🔧 Configuration du Backend FastAPI
+
+### Installation des dépendances
+
+```bash
+# Activer l'environnement virtuel
+source .venv/bin/activate
+
+# Installer les dépendances avec uv
+uv pip install fastapi uvicorn ffmpeg-python python-multipart pydantic
+```
+
+### Lancer le serveur de développement
+
+```bash
+# Se placer dans le dossier backend
+cd backend
+
+# Lancer le serveur FastAPI en mode développement
+uvicorn app.main:app --reload
+```
+
+### Points d'accès disponibles
+
+- `http://localhost:8000/health` : Endpoint de vérification de santé
+- `http://localhost:8000/docs` : Documentation interactive Swagger
+
+---
+
 ## 🔍 Dépannage
 
 ### Problèmes courants

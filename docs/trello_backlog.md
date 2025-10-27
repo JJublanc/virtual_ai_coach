@@ -78,8 +78,8 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
   │   └── config.py
   ├── tests/
   ```
-- [ ] Créer `main.py` avec route `/health` de test
-- [ ] Lancer serveur : `uvicorn app.main:app --reload`
+- [x] Créer `main.py` avec route `/health` de test
+- [x] Lancer serveur : `uvicorn app.main:app --reload`
 
 **Critères d'acceptation :**
 - ✅ `http://localhost:8000/health` retourne 200 OK
