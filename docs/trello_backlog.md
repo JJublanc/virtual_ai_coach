@@ -93,15 +93,16 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Définir les modèles Pydantic pour les exercices et workouts
 
 **Tâches :**
-- [ ] Créer `models/exercise.py` avec modèle Exercise
-- [ ] Créer `models/workout.py` avec modèle WorkoutSession
-- [ ] Créer `models/config.py` avec WorkoutConfig
-- [ ] Ajouter validation Pydantic sur tous les champs
-- [ ] Créer fichier JSON mock avec 3-5 exercices de test
+- [x] Créer `models/exercise.py` avec modèle Exercise
+- [x] Créer `models/workout.py` avec modèle WorkoutSession
+- [x] Créer `models/config.py` avec WorkoutConfig
+- [x] Ajouter validation Pydantic sur tous les champs
+- [x] Créer fichier JSON mock avec 3-5 exercices de test
 
 **Critères d'acceptation :**
 - ✅ Modèles valident correctement les données
 - ✅ Fichier mock `exercises.json` chargeable
+- ✅ Les tests passent
 
 **Labels :** `backend`, `models`, `p1-high`
 
@@ -111,11 +112,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer endpoint pour lister les exercices disponibles
 
 **Tâches :**
-- [ ] Créer `api/exercises.py` avec router FastAPI
-- [ ] Implémenter GET `/api/exercises`
-- [ ] Charger données depuis `exercises.json`
-- [ ] Ajouter tests unitaires
-- [ ] Ajouter CORS middleware pour frontend
+- [x] Créer `api/exercises.py` avec router FastAPI
+- [x] Implémenter GET `/api/exercises`
+- [x] Charger données depuis `exercises.json`
+- [x] Ajouter tests unitaires
+- [x] Ajouter CORS middleware pour frontend
 
 **Critères d'acceptation :**
 - ✅ Endpoint retourne liste d'exercices en JSON
