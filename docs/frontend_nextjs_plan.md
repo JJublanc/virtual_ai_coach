@@ -158,19 +158,19 @@ export interface IntervalConfig {
 export interface WorkoutConfig {
   // Quick Setup
   intensity: IntensityLevel
-  
+
   // Parameterized
   intervals: IntervalConfig
   no_repeat: boolean
   no_jump: boolean
-  
+
   // Exercise Intensity (peut sélectionner plusieurs)
   intensity_levels: ('easy' | 'medium' | 'hard')[]
-  
+
   // Warm up and Stretching
   include_warm_up: boolean
   include_cool_down: boolean
-  
+
   // Training duration (minutes)
   target_duration?: number
 }
@@ -218,19 +218,19 @@ import { devtools, persist } from 'zustand/middleware'
 interface TrainingStore {
   // État de la séance
   session: TrainingSession | null
-  
+
   // Configuration
   config: WorkoutConfig
-  
+
   // État du player
   player: VideoPlayerState
-  
+
   // Actions - Exercices
   addExercise: (exercise: Exercise) => void
   removeExercise: (exerciseId: string) => void
   reorderExercises: (startIndex: number, endIndex: number) => void
   updateExerciseDuration: (exerciseId: string, duration: number) => void
-  
+
   // Actions - Configuration
   setIntensity: (intensity: IntensityLevel) => void
   setIntervals: (intervals: IntervalConfig) => void
@@ -240,7 +240,7 @@ interface TrainingStore {
   toggleWarmUp: () => void
   toggleCoolDown: () => void
   setTargetDuration: (minutes: number) => void
-  
+
   // Actions - Séance
   generateTraining: (aiRequest?: AIGenerationRequest) => Promise<void>
   startTraining: () => void
@@ -248,10 +248,10 @@ interface TrainingStore {
   resumeTraining: () => void
   nextExercise: () => void
   previousExercise: () => void
-  
+
   // Actions - Player
   updatePlayerState: (state: Partial<VideoPlayerState>) => void
-  
+
   // Utilitaires
   reset: () => void
   calculateTotalDuration: () => number
@@ -312,12 +312,12 @@ export const useTrainingStore = create<TrainingStore>()(
             const exercises = [...state.session!.exercises]
             const [removed] = exercises.splice(startIndex, 1)
             exercises.splice(endIndex, 0, removed)
-            
+
             // Réindexer
             exercises.forEach((ex, idx) => {
               ex.order = idx
             })
-            
+
             return { session: { ...state.session!, exercises } }
           }),
 
@@ -389,24 +389,24 @@ export const useTrainingStore = create<TrainingStore>()(
         calculateTotalDuration: () => {
           const state = get()
           if (!state.session) return 0
-          
+
           const { exercises } = state.session
           const { intervals, include_warm_up, include_cool_down } = state.config
-          
+
           let total = 0
-          
+
           // Warm up
           if (include_warm_up) total += 300 // 5 min
-          
+
           // Exercices
           exercises.forEach((we) => {
             const duration = we.custom_duration || we.exercise.default_duration
             total += duration + intervals.rest_time
           })
-          
+
           // Cool down
           if (include_cool_down) total += 300 // 5 min
-          
+
           return total
         },
 
@@ -461,7 +461,7 @@ export default function TrainPage() {
       {/* Colonne droite - Contrôles */}
       <div className="space-y-6">
         <AIAssistant />
-        
+
         <div className="space-y-2">
           <label className="text-sm text-gray-600">Training duration</label>
           <input
@@ -548,7 +548,7 @@ export function VideoPlayer() {
               />
             ))}
           </div>
-          
+
           <TimerCircle seconds={player.current_time} />
           <RoundIndicator current={player.current_round} total={session?.rounds || 5} />
         </div>
@@ -556,8 +556,8 @@ export function VideoPlayer() {
         {/* Bouton Play/Pause - Centre */}
         <button
           onClick={togglePlay}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-                     w-20 h-20 rounded-full border-4 border-white/30 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                     w-20 h-20 rounded-full border-4 border-white/30
                      flex items-center justify-center pointer-events-auto
                      hover:border-white/50 transition"
         >
@@ -602,7 +602,7 @@ export function ExerciseList() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    
+
     if (active.id !== over?.id) {
       const oldIndex = session!.exercises.findIndex(
         (e) => e.exercise.id === active.id
@@ -610,7 +610,7 @@ export function ExerciseList() {
       const newIndex = session!.exercises.findIndex(
         (e) => e.exercise.id === over?.id
       )
-      
+
       reorderExercises(oldIndex, newIndex)
     }
   }
@@ -683,7 +683,7 @@ export function ExerciseCard({ workoutExercise }: ExerciseCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 
+      className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200
                  rounded-lg hover:shadow-md transition"
     >
       {/* Drag handle */}

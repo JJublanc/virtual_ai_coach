@@ -17,7 +17,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - [x] Installer FFmpeg (brew/apt/chocolatey)
 - [x] Configurer VSCode avec extensions (Python, ESLint, Prettier)
 - [x] Installer uv et créer un .venv
-- [ ] Installer PostgreSQL local (ou via Docker)
+- [x] Installer PostgreSQL local (ou via Docker)
 
 
 **Critères d'acceptation :**
@@ -35,11 +35,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer la structure Git et configurer les branches
 
 **Tâches :**
-- [ ] Créer repository GitHub `virtual-ai-coach`
-- [ ] Configurer `.gitignore` (Python, Node, env files)
-- [ ] Créer branches : `main`, `develop`, `feat/*`
-- [ ] Configurer protection branche `main`
-- [ ] Ajouter README.md avec instructions setup
+- [x] Créer repository GitHub `virtual-ai-coach`
+- [x] Configurer `.gitignore` (Python, Node, env files)
+- [x] Créer branches : `main`, `dev`, `feat/*`
+- [x] Configurer protection branche `main`
+- [x] Ajouter README.md avec instructions setup
 - [ ] Installer et configurer les précommit
 
 
@@ -58,15 +58,15 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer la structure backend Python avec FastAPI
 
 **Tâches :**
-- [ ] Créer dossier `backend/`
-- [ ] Initialiser virtual environment Python
-- [ ] Créer `requirements.txt` avec dépendances :
+- [x] Créer dossier `backend/`
+- [x] Initialiser virtual environment Python
+- [x] Ajouter les modules utiles à uv :
   - fastapi
   - uvicorn
   - ffmpeg-python
   - python-multipart
   - pydantic
-- [ ] Créer structure de dossiers :
+- [x] Créer structure de dossiers :
   ```
   backend/
   ├── app/
@@ -77,7 +77,6 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
   │   ├── api/
   │   └── config.py
   ├── tests/
-  └── requirements.txt
   ```
 - [ ] Créer `main.py` avec route `/health` de test
 - [ ] Lancer serveur : `uvicorn app.main:app --reload`

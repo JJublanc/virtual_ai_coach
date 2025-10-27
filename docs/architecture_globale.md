@@ -128,7 +128,7 @@ sequenceDiagram
     VP->>VP: Calcule durées ajustées
     VP->>VP: Construit filtres overlays
     VP->>FF: Lance commande FFmpeg
-    
+
     loop Streaming chunks
         FF->>FF: Traite vidéo (concat, speed, overlays)
         FF-->>VP: Chunk vidéo MP4
@@ -136,7 +136,7 @@ sequenceDiagram
         B-->>F: StreamingResponse chunk
         F->>U: Affiche dans player
     end
-    
+
     FF-->>VP: Fin stream
     VP-->>B: Complet
     B-->>F: 200 OK
@@ -258,22 +258,22 @@ def build_workout_video(exercises, config):
     - Appliquer vitesse selon intensité
     - Ajouter overlays (timer, progress, nom exercice)
     """
-    
+
     inputs = []
-    
+
     # 1. Charger les vidéos avec ajustement de vitesse
     for ex in exercises:
         input_video = ffmpeg.input(ex.video_path)
-        
+
         # Appliquer vitesse selon intensité
         speed = get_speed_multiplier(config.intensity)
         input_video = input_video.setpts(f'{1/speed}*PTS')
-        
+
         inputs.append(input_video)
-    
+
     # 2. Concaténer
     concat = ffmpeg.concat(*inputs, v=1, a=0)
-    
+
     # 3. Ajouter timer overlay
     timer = ffmpeg.drawtext(
         concat,
@@ -287,7 +287,7 @@ def build_workout_video(exercises, config):
         boxcolor='black@0.5',
         boxborderw=5
     )
-    
+
     # 4. Ajouter barre de progression
     total_duration = sum(ex.duration for ex in exercises)
     progress = ffmpeg.drawbox(
@@ -299,11 +299,11 @@ def build_workout_video(exercises, config):
         color='green',
         t='fill'
     )
-    
+
     # 5. Ajouter nom exercice (avec drawtext dynamique)
     # Note: FFmpeg ne supporte pas le texte dynamique facilement
     # Alternative: Générer une séquence de vidéos avec texte pré-rendu
-    
+
     # 6. Output streaming
     output = progress.output(
         'pipe:',
@@ -313,7 +313,7 @@ def build_workout_video(exercises, config):
         movflags='frag_keyframe+empty_moov',
         pix_fmt='yuv420p'
     )
-    
+
     return output
 ```
 

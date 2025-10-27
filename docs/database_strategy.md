@@ -388,7 +388,7 @@ CREATE TABLE workout_sessions (
 
 ```sql
 -- 1. Lister tous les exercices avec catégories
-SELECT 
+SELECT
     e.*,
     array_agg(c.name) as categories
 FROM exercises e
@@ -397,7 +397,7 @@ LEFT JOIN categories c ON ec.category_id = c.id
 GROUP BY e.id;
 
 -- 2. Récupérer une séance complète avec exercices
-SELECT 
+SELECT
     w.*,
     json_agg(
         json_build_object(
@@ -417,13 +417,13 @@ SELECT e.*
 FROM exercises e
 JOIN exercise_categories ec ON e.id = ec.exercise_id
 JOIN categories c ON ec.category_id = c.id
-WHERE 
+WHERE
     e.difficulty = 'medium'
     AND c.name = 'cardio'
     AND (NOT e.has_jump OR e.has_jump = false); -- Si no_jump activé
 
 -- 4. Historique séances utilisateur
-SELECT 
+SELECT
     w.*,
     ws.started_at,
     ws.completed_at,
