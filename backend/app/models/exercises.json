@@ -1,0 +1,47 @@
+[
+    {
+        "name": "Push-ups",
+        "description": "Pompes classiques, gardez le corps aligné, descendez jusqu'à ce que la poitrine touche presque le sol.",
+        "icon": "💪",
+        "video_url": "https://your-supabase.co/storage/v1/object/public/videos/pushups.mov",
+        "default_duration": 30,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["chest", "triceps", "shoulders"],
+            "equipment_needed": [],
+            "calories_per_min": 7.0
+        }
+    },
+    {
+        "name": "Air Squat",
+        "description": "Squats au poids du corps, pieds écartés largeur d'épaules, descendez comme si vous vous asseyez dans une chaise.",
+        "icon": "🦵",
+        "video_url": "https://your-supabase.co/storage/v1/object/public/videos/air_squat.mov",
+        "default_duration": 45,
+        "difficulty": "easy",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["quadriceps", "glutes", "core"],
+            "equipment_needed": [],
+            "calories_per_min": 6.5
+        }
+    },
+    {
+        "name": "Plank",
+        "description": "Gainage ventral, maintenez la position en gardant le corps aligné.",
+        "icon": "🏋️",
+        "video_url": "https://your-supabase.co/storage/v1/object/public/videos/plank.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["core", "shoulders"],
+            "equipment_needed": [],
+            "calories_per_min": 5.0
+        }
+    }
+]
