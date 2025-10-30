@@ -57,7 +57,7 @@ class VideoService:
         Returns:
             float: Multiplicateur de vitesse (0.8 = plus lent, 1.2 = plus rapide)
         """
-        multiplier = self.SPEED_MULTIPLIERS.get(intensity, 1.0)
+        multiplier = 1  # self.SPEED_MULTIPLIERS.get(intensity, 1.0)
         logger.debug(f"Multiplicateur de vitesse pour {intensity}: {multiplier}")
         return multiplier
 
