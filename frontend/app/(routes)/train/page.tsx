@@ -28,17 +28,30 @@ export default function TrainPage() {
       </div>
 
       {/* Colonne droite - Contrôles */}
-      <div className="w-full lg:w-[400px] space-y-4 flex-shrink-0 max-h-screen overflow-y-auto pb-6 sticky top-0">
+      <div className="w-full lg:w-[400px] space-y-4 flex-shrink-0 pb-6 sticky top-0">
         <AIAssistant />
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <label className="block text-sm text-gray-600 mb-2">Training duration</label>
           <input
             type="number"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 mb-4"
             placeholder="Minutes"
           />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-bold text-gray-900">12</span>
+              <span className="text-sm text-gray-600">Available<br />exercices</span>
+            </div>
+            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              Select more
+            </button>
+          </div>
         </div>
+
+        <button className="w-full py-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
+          Generate training
+        </button>
 
         {/* Quick Setup - Accordion */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -113,9 +126,6 @@ export default function TrainPage() {
           )}
         </div>
 
-        <button className="w-full py-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
-          Generate training
-        </button>
       </div>
     </div>
   )

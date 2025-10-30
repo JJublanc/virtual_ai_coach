@@ -24,3 +24,7 @@ exercices_generation/temp/.gitkeep
 exercices_generation/.DS_Store
 
 backend/*.mp4
+
+exercices_generation/tools/
+videos/
+workout.mp4

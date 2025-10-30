@@ -171,15 +171,15 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer l'application frontend avec Next.js 14+
 
 **Tâches :**
-- [ ] Créer projet : `npx create-next-app@latest frontend`
-- [ ] Choisir : TypeScript, App Router, Tailwind CSS
+- [x] Créer projet : `npx create-next-app@latest frontend`
+- [x] Choisir : TypeScript, App Router, Tailwind CSS
 - [ ] Installer dépendances :
   - @shadcn/ui
   - zustand
   - @tanstack/react-query
   - react-player
-- [ ] Configurer structure de dossiers selon `frontend_nextjs_plan.md`
-- [ ] Lancer dev server : `npm run dev`
+- [x] Configurer structure de dossiers selon `frontend_nextjs_plan.md`
+- [x] Lancer dev server : `npm run dev`
 
 **Critères d'acceptation :**
 - ✅ `http://localhost:3000` accessible
@@ -193,11 +193,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Implémenter le header et la structure principale
 
 **Tâches :**
-- [ ] Créer `components/layout/Header.tsx`
-- [ ] Créer navigation : Goals, Plan, Train
-- [ ] Créer `components/layout/MainLayout.tsx` (2 colonnes)
-- [ ] Implémenter design selon mockup
-- [ ] Rendre responsive (mobile, tablet, desktop)
+- [x] Créer `components/layout/Header.tsx`
+- [x] Créer navigation : Goals, Plan, Train
+- [x] Créer `components/layout/MainLayout.tsx` (2 colonnes)
+- [x] Implémenter design selon mockup
+- [x] Rendre responsive (mobile, tablet, desktop)
 
 **Critères d'acceptation :**
 - ✅ Header visible avec navigation
@@ -208,35 +208,62 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 
 ---
 
-#### FRONT-003 : Page Train - Sélection exercices
-**Description :** Créer interface de sélection d'exercices
+#### FRONT-003-1 : Ajouter le nombre d'exercice disponible pour générer le workout
+**Description :**
 
 **Tâches :**
-- [ ] Créer page `app/train/page.tsx`
-- [ ] Créer `components/exercises/ExerciseList.tsx`
-- [ ] Implémenter drag & drop avec @dnd-kit
-- [ ] Appeler API `/api/exercises` avec React Query
-- [ ] Afficher liste d'exercices sélectionnables
+- [x] Intégrer la nouvelle version de la maquette
 
 **Critères d'acceptation :**
-- ✅ Exercices chargés depuis backend
-- ✅ Drag & drop fonctionne
-- ✅ Liste mise à jour en temps réel
+- ✅ Le front colle à la maquette
 
 **Labels :** `frontend`, `train-page`, `p0-critical`
 
 ---
 
+#### FRONT-003-2 : Page Train - Choisir les exercices disponibles pour la génération du workout
+**Description :** Composant >> sur un clic on a un popup grâce auquel on peut supprimer les exercices que l'on veut enlever
+
+**Tâches :**
+- [ ] A définir
+
+**Critères d'acceptation :**
+- ✅ Les exercices se chargent depuis le backend
+- ✅ Bouton pour débloquer les exercices pas encore fait renvoie faire le popup d'inscription
+
+**Labels :** `frontend`, `train-page`, `p0-critical`
+
+---
+
+#### FRONT-003-3 : Page Train - Popup inscrivez-vous
+**Description :** Afficher un popup dès que l'on clique sur une fonctionnalité non supportée
+
+**Tâches :**
+- [ ] AI assisted
+- [ ] Dashboard
+- [ ] Goals
+- [ ] Plan
+- [ ] No repeat | No Jump | Include Warm Up | Cool Down and Streching
+
+**Critères d'acceptation :**
+- ✅ Popup
+- ✅ Drag & drop fonctionne
+- ✅ Liste mise à jour en temps réel
+
+**Labels :** `frontend`, `train-page`, `p0-critical`
+
+-----
+
 #### FRONT-004 : Panneau de configuration workout
 **Description :** Créer le panneau de configuration avec intensité et paramètres
 
 **Tâches :**
-- [ ] Créer `components/controls/QuickSetup.tsx`
-- [ ] Créer `components/controls/ParameterizedSetup.tsx`
-- [ ] Implémenter toggles : No repeat, No jump
-- [ ] Implémenter sliders : Work/Rest time
-- [ ] Implémenter checkboxes : Intensity levels
-- [ ] Gérer state avec Zustand
+- [x] Créer `components/controls/QuickSetup.tsx`
+- [x] Créer `components/controls/ParameterizedSetup.tsx`
+- [x] Implémenter toggles : No repeat, No jump
+- [x] Implémenter sliders : Work/Rest time
+- [x] Implémenter checkboxes : Intensity levels
+- [x] Gérer state avec Zustand
 
 **Critères d'acceptation :**
 - ✅ Tous les contrôles fonctionnels
