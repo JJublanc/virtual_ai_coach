@@ -165,7 +165,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 
 ---
 
-### 🎯 PHASE 1 : MVP Local - Frontend
+### 🎯 PHASE 1 : MVP Local
 
 #### FRONT-001 : Initialiser projet Next.js
 **Description :** Créer l'application frontend avec Next.js 14+
@@ -271,6 +271,34 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - ✅ UI correspond au design
 
 **Labels :** `frontend`, `ui`, `controls`, `p1-high`
+
+---
+
+#### Back-006 : Algorithme de création d'une session
+**Description :** Implémenter l'algorithme de création d'une session de workout
+
+**Tâches :**
+- [ ] Créer `components/layout/Header.tsx`
+- [ ] Créer navigation : Goals, Plan, Train
+
+**Critères d'acceptation :**
+- ✅
+
+**Labels :** `frontend`, `ui`, `layout`, `p1-high`
+
+---
+
+#### Back-007 : Route de création d'une vidéo
+**Description :** Créer la route permettant de récupérer la vidéo
+
+**Tâches :**
+- [ ] Création d'une vidéo
+- [ ] Création de la route
+
+**Critères d'acceptation :**
+- ✅
+
+**Labels :** `frontend`, `ui`, `layout`, `p1-high`
 
 ---
 
