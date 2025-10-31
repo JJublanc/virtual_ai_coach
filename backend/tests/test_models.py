@@ -41,7 +41,7 @@ def test_workout_config():
     assert config.intensity == Intensity.HIGH_INTENSITY
     assert config.intervals["work_time"] == 45
     assert config.no_jump
-    assert config.intensity_levels == [Difficulty.MEDIUM, Difficulty.HARD]
+    assert config.exercice_intensity_levels == [Difficulty.MEDIUM, Difficulty.HARD]
 
 
 def test_workout_model():

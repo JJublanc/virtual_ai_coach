@@ -9,7 +9,7 @@ class WorkoutConfig(BaseModel):
     intervals: Dict[str, int] = Field(default={"work_time": 40, "rest_time": 20})
     no_repeat: bool = False
     no_jump: bool = False
-    intensity_levels: List[Difficulty] = [
+    exercice_intensity_levels: List[Difficulty] = [
         Difficulty.EASY,
         Difficulty.MEDIUM,
         Difficulty.HARD,
