@@ -7,6 +7,7 @@ import { useTrainingStore } from '@/store/trainingStore'
 
 interface WorkoutExercise {
   name: string
+  description: string
   icon: string
   duration: number
   order: number
@@ -132,6 +133,7 @@ export function useWorkoutGeneration() {
               console.log('Détails du workout reçus:', workoutDetails)
               workoutExercises = workoutDetails.exercises.map((ex: any) => ({
                 name: ex.name,
+                description: ex.description,
                 icon: ex.icon,
                 duration: ex.duration,
                 order: ex.order,

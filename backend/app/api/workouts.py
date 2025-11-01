@@ -138,6 +138,7 @@ class WorkoutExerciseDetail(BaseModel):
     """Détail d'un exercice dans un workout"""
 
     name: str = Field(..., description="Nom de l'exercice")
+    description: str = Field(..., description="Description détaillée de l'exercice")
     icon: str = Field(..., description="Icône de l'exercice")
     duration: int = Field(..., description="Durée en secondes")
     order: int = Field(..., description="Ordre dans la séquence")
@@ -602,6 +603,7 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
             workout_details.append(
                 WorkoutExerciseDetail(
                     name=exercise.name,
+                    description=exercise.description or "Description non disponible",
                     icon=exercise.icon or "🏋️",
                     duration=exercise.default_duration,
                     order=i + 1,

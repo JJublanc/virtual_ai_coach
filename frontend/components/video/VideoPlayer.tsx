@@ -4,18 +4,28 @@
 import { Play, Pause, SkipBack, SkipForward, Maximize2, Loader2 } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 
+interface WorkoutExercise {
+  name: string
+  description: string
+  icon: string
+  duration: number
+  order: number
+}
+
 interface VideoPlayerProps {
   videoUrl?: string | null
   isGenerating?: boolean
   progress?: number
   error?: string | null
+  workoutExercises?: WorkoutExercise[]
 }
 
-export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [] }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [currentExercise, setCurrentExercise] = useState<WorkoutExercise | null>(null)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -58,7 +68,20 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime)
+      const time = videoRef.current.currentTime
+      setCurrentTime(time)
+
+      // Calculer quel exercice est en cours
+      if (workoutExercises.length > 0) {
+        let cumulativeTime = 0
+        for (const exercise of workoutExercises) {
+          if (time >= cumulativeTime && time < cumulativeTime + exercise.duration) {
+            setCurrentExercise(exercise)
+            break
+          }
+          cumulativeTime += exercise.duration
+        }
+      }
     }
   }
 
@@ -127,11 +150,14 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           {/* Exercise description overlay - top left */}
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-xs">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-lg">Entraînement</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{currentExercise?.icon || "🏋️"}</span>
+                <h3 className="font-bold text-lg">{currentExercise?.name || "Entraînement"}</h3>
+              </div>
               <button className="text-gray-600">▼</button>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !
+              {currentExercise?.description || "Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !"}
             </p>
           </div>
 

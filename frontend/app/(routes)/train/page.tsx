@@ -39,6 +39,7 @@ export default function TrainPage() {
           isGenerating={isGenerating}
           progress={progress}
           error={error}
+          workoutExercises={workoutExercises}
         />
         <ExerciseList
           exercises={workoutExercises}
