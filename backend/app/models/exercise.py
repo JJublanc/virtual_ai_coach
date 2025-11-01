@@ -1,5 +1,5 @@
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
@@ -24,7 +24,7 @@ class ExerciseMetadata(BaseModel):
 
 
 class Exercise(BaseModel):
-    id: Optional[UUID] = Field(default=None)
+    id: UUID = Field(default_factory=uuid4)
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     icon: Optional[str] = Field(default=None, max_length=50)

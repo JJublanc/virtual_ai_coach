@@ -1,79 +1,192 @@
 // components/video/VideoPlayer.tsx
 'use client'
 
-import { Play, Maximize2 } from 'lucide-react'
+import { Play, Maximize2, Loader2 } from 'lucide-react'
+import { useRef, useEffect, useState } from 'react'
 
-export function VideoPlayer() {
+interface VideoPlayerProps {
+  videoUrl?: string | null
+  isGenerating?: boolean
+  progress?: number
+  error?: string | null
+}
+
+export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error }: VideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+
+  useEffect(() => {
+    if (videoUrl && videoRef.current) {
+      videoRef.current.load()
+    }
+  }, [videoUrl])
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
+    }
+  }
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime)
+    }
+  }
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration)
+    }
+  }
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
   return (
     <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
-      {/* Video background placeholder */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
-        {/* Exercise description overlay - top left */}
-        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-xs">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-lg">Squate</h3>
-            <button className="text-gray-600">▼</button>
-          </div>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            stand with your feet shoulder-width apart, keep your chest up, and tighten your core. Push your hips back as if sitting in a chair, lower until your thighs are parallel to the ground, then drive through your heels to stand back up.
-          </p>
-        </div>
+      {/* Vidéo réelle ou placeholder */}
+      {videoUrl ? (
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+        >
+          <source src={videoUrl} type="video/mp4" />
+          Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+      )}
 
-        {/* Timer circle - top right */}
-        <div className="absolute top-4 right-4">
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24 transform -rotate-90">
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="8"
-                fill="none"
+      {/* État de génération */}
+      {isGenerating && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-900" />
+            <p className="text-gray-900 font-medium mb-2">Génération de la vidéo...</p>
+            <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="#4ade80"
-                strokeWidth="8"
-                fill="none"
-                strokeDasharray={`${2 * Math.PI * 40}`}
-                strokeDashoffset={`${2 * Math.PI * 40 * 0.5}`}
-                className="transition-all duration-1000"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">23</span>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">{progress}%</p>
+          </div>
+        </div>
+      )}
+
+      {/* Erreur */}
+      {error && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center max-w-md">
+            <p className="text-red-800 font-medium mb-2">Erreur de génération</p>
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Contrôles vidéo - seulement si vidéo disponible */}
+      {videoUrl && !isGenerating && !error && (
+        <>
+          {/* Exercise description overlay - top left */}
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-xs">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-lg">Entraînement</h3>
+              <button className="text-gray-600">▼</button>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !
+            </p>
+          </div>
+
+          {/* Timer circle - top right */}
+          <div className="absolute top-4 right-4">
+            <div className="relative w-24 h-24">
+              <svg className="w-24 h-24 transform -rotate-90">
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="40"
+                  stroke="rgba(255,255,255,0.2)"
+                  strokeWidth="8"
+                  fill="none"
+                />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="40"
+                  stroke="#4ade80"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 40}`}
+                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - progressPercentage / 100)}`}
+                  className="transition-all duration-300"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white text-lg font-bold">
+                  {formatTime(currentTime)}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Round indicator */}
-        <div className="absolute top-32 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2">
-          <span className="text-sm font-medium">Round 2/5</span>
-        </div>
+          {/* Play button - center */}
+          {!isPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <button
+                onClick={togglePlay}
+                className="w-20 h-20 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/50 hover:bg-white/30 transition-colors"
+              >
+                <Play className="w-10 h-10 text-white ml-1" fill="white" />
+              </button>
+            </div>
+          )}
 
-        {/* Play button - center */}
+          {/* Progress bar - bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white text-sm font-medium">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+              <button className="text-white hover:text-gray-300 transition-colors">
+                <Maximize2 className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-400 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* État par défaut - pas de vidéo */}
+      {!videoUrl && !isGenerating && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <button className="w-20 h-20 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/50 hover:bg-white/30 transition-colors">
-            <Play className="w-10 h-10 text-white ml-1" fill="white" />
-          </button>
-        </div>
-
-        {/* Progress bar - bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-white text-sm font-medium">35%</span>
-            <button className="text-white hover:text-gray-300 transition-colors">
-              <Maximize2 className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full bg-green-400 rounded-full" style={{ width: '35%' }}></div>
+          <div className="text-center text-white">
+            <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Prêt à commencer ?</p>
+            <p className="text-sm opacity-75">Configurez votre entraînement et cliquez sur "Generate training"</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import logging
 import tempfile
 from pathlib import Path
 from typing import List
+from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -12,7 +13,12 @@ from pydantic import BaseModel, Field
 
 from ..models.config import WorkoutConfig
 from ..models.exercise import Exercise
+from ..models.workout import Workout
 from ..services.video_service import VideoService
+from ..services.workout_generator import (
+    generate_workout_exercises,
+    load_exercises_from_json,
+)
 from ..api.exercises import load_exercises
 
 # Configuration du logger
@@ -58,6 +64,70 @@ class GenerateVideoRequest(BaseModel):
                     "intervals": {"work_time": 40, "rest_time": 20},
                     "no_jump": False,
                     "target_duration": 30,
+                },
+            }
+        }
+    }
+
+
+class GenerateWorkoutVideoRequest(BaseModel):
+    """Requête pour générer automatiquement un workout et sa vidéo"""
+
+    config: WorkoutConfig = Field(
+        ...,
+        description="Configuration du workout (intensité, durée, critères de filtrage)",
+    )
+    total_duration: int = Field(
+        ..., gt=0, description="Durée totale du workout en secondes"
+    )
+    name: str = Field(default="Workout Généré", description="Nom du workout")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "config": {
+                    "intensity": "medium_intensity",
+                    "intervals": {"work_time": 40, "rest_time": 20},
+                    "no_jump": True,
+                    "exercice_intensity_levels": ["easy", "medium"],
+                    "target_duration": 30,
+                },
+                "total_duration": 600,  # 10 minutes
+                "name": "Mon Workout Matinal",
+            }
+        }
+    }
+
+
+class WorkoutGenerationResponse(BaseModel):
+    """Réponse contenant les informations du workout généré"""
+
+    workout_id: str = Field(..., description="ID unique du workout généré")
+    name: str = Field(..., description="Nom du workout")
+    total_duration: int = Field(..., description="Durée totale en secondes")
+    exercise_count: int = Field(..., description="Nombre d'exercices générés")
+    exercises: List[str] = Field(..., description="Liste des noms d'exercices")
+    config: WorkoutConfig = Field(..., description="Configuration utilisée")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "workout_id": "12345678-1234-1234-1234-123456789012",
+                "name": "Mon Workout Matinal",
+                "total_duration": 600,
+                "exercise_count": 10,
+                "exercises": [
+                    "Push-ups",
+                    "Air Squat",
+                    "Plank",
+                    "Push-ups",
+                    "Air Squat",
+                ],
+                "config": {
+                    "intensity": "medium_intensity",
+                    "intervals": {"work_time": 40, "rest_time": 20},
+                    "no_jump": True,
+                    "exercice_intensity_levels": ["easy", "medium"],
                 },
             }
         }
@@ -314,6 +384,208 @@ async def generate_workout_video(request: GenerateVideoRequest):
     except Exception as e:
         logger.error(
             f"Erreur inattendue lors de la génération vidéo: {e}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne du serveur: {str(e)}",
+        )
+
+
+@router.post("/generate-auto-workout-video")
+async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
+    """
+    Génère automatiquement un workout et streame sa vidéo.
+
+    Cette endpoint effectue un processus complet de bout en bout :
+    1. Crée un objet Workout basé sur la configuration fournie
+    2. Génère automatiquement une liste d'exercices aléatoires via workout_generator
+    3. Charge les exercices complets depuis la base de données
+    4. Construit et streame la vidéo MP4 résultante
+
+    Args:
+        request: Configuration contenant la durée, les critères de filtrage et les paramètres
+
+    Returns:
+        StreamingResponse: Vidéo MP4 streamée avec les headers appropriés
+
+    Raises:
+        HTTPException 400: Si la configuration est invalide
+        HTTPException 404: Si aucun exercice ne correspond aux critères
+        HTTPException 500: Si une erreur survient lors de la génération
+        HTTPException 504: Si le timeout de 5 minutes est dépassé
+
+    Example:
+        ```bash
+        curl -X POST "http://localhost:8000/api/generate-auto-workout-video" \\
+             -H "Content-Type: application/json" \\
+             -d '{
+                   "config": {
+                     "intensity": "medium_intensity",
+                     "intervals": {"work_time": 40, "rest_time": 20},
+                     "no_jump": true,
+                     "exercice_intensity_levels": ["easy", "medium"]
+                   },
+                   "total_duration": 600,
+                   "name": "Mon Workout Matinal"
+                 }' \\
+             --output workout.mp4
+        ```
+    """
+    try:
+        logger.info("Requête de génération automatique de workout reçue")
+        logger.info(f"Nom: {request.name}")
+        logger.info(
+            f"Durée: {request.total_duration}s ({request.total_duration // 60} minutes)"
+        )
+        logger.info(f"Intensité: {request.config.intensity}")
+        logger.info(f"No jump: {request.config.no_jump}")
+        logger.info(
+            f"Niveaux de difficulté: {request.config.exercice_intensity_levels}"
+        )
+
+        # 1. Créer l'objet Workout
+        workout_id = uuid4()
+        workout = Workout(
+            id=workout_id,
+            name=request.name,
+            config=request.config,
+            total_duration=request.total_duration,
+            ai_generated=True,
+        )
+
+        logger.info(f"Workout créé avec ID: {workout_id}")
+
+        # 2. Générer automatiquement les exercices via workout_generator
+        try:
+            workout_exercises = generate_workout_exercises(workout)
+            logger.info(f"{len(workout_exercises)} exercices générés automatiquement")
+        except ValueError as e:
+            logger.error(f"Erreur lors de la génération des exercices: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Impossible de générer des exercices avec ces critères: {str(e)}",
+            )
+
+        # 3. Charger les exercices complets depuis la base de données
+        all_exercises = load_exercises_from_json()
+
+        # Créer un mapping ID -> Exercise pour une recherche rapide
+        exercises_by_id = {str(ex.id): ex for ex in all_exercises}
+
+        # Récupérer les exercices complets dans l'ordre généré
+        selected_exercises: List[Exercise] = []
+        for workout_ex in workout_exercises:
+            exercise_id_str = str(workout_ex.exercise_id)
+            if exercise_id_str in exercises_by_id:
+                selected_exercises.append(exercises_by_id[exercise_id_str])
+                logger.debug(
+                    f"Exercice {workout_ex.order_index}: {exercises_by_id[exercise_id_str].name}"
+                )
+            else:
+                logger.error(
+                    f"Exercice avec ID {exercise_id_str} non trouvé dans la base"
+                )
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Exercice avec ID {exercise_id_str} non trouvé",
+                )
+
+        if not selected_exercises:
+            raise HTTPException(
+                status_code=500, detail="Aucun exercice valide n'a pu être chargé"
+            )
+
+        logger.info(f"{len(selected_exercises)} exercices chargés pour la vidéo")
+
+        # 4. Initialiser le service vidéo
+        project_root = Path(__file__).parent.parent.parent.parent
+        video_service = VideoService(project_root=project_root)
+
+        # 5. Préparer la commande FFmpeg pour le streaming
+        speed = video_service.get_speed_multiplier(request.config.intensity)
+        logger.debug(f"Multiplicateur de vitesse: {speed}x")
+
+        # Créer le fichier de concaténation temporaire
+        temp_dir = Path(tempfile.gettempdir())
+        import os
+
+        concat_file = temp_dir / f"concat_{os.getpid()}.txt"
+
+        # Vérifier et préparer les chemins vidéo
+        video_paths = []
+        for exercise in selected_exercises:
+            video_path = video_service._resolve_video_path(exercise)
+            if video_path and video_path.exists():
+                video_paths.append(video_path)
+                logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
+            else:
+                logger.error(f"Vidéo manquante pour: {exercise.name}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Fichier vidéo manquant pour l'exercice '{exercise.name}'",
+                )
+
+        # Créer le fichier de concaténation
+        with open(concat_file, "w") as f:
+            for video_path in video_paths:
+                f.write(f"file '{video_path.absolute()}'\n")
+
+        logger.debug(f"Fichier de concaténation créé: {concat_file}")
+
+        # 6. Construire la commande FFmpeg pour streaming vers stdout
+        command = [
+            "ffmpeg",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_file),
+        ]
+
+        # Ajout du filtre de vitesse si nécessaire
+        if speed != 1.0:
+            pts_value = 1.0 / speed
+            command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
+
+        # Options de sortie optimisées pour le streaming
+        command.extend(
+            [
+                "-c:v",
+                "libx264",
+                "-preset",
+                "ultrafast",
+                "-pix_fmt",
+                "yuv420p",
+                "-movflags",
+                "frag_keyframe+empty_moov",
+                "-f",
+                "mp4",
+                "-an",  # Pas d'audio
+                "pipe:1",  # Écrire vers stdout
+            ]
+        )
+
+        logger.info("Commande FFmpeg construite, démarrage du streaming")
+        logger.info(f"Workout: {request.name} - {len(selected_exercises)} exercices")
+
+        # 7. Retourner la réponse en streaming
+        return StreamingResponse(
+            stream_ffmpeg_output(command, concat_file, timeout=GENERATION_TIMEOUT),
+            media_type="video/mp4",
+            headers={
+                "Content-Disposition": f'inline; filename="{request.name.replace(" ", "_")}.mp4"',
+                "Cache-Control": "no-cache",
+                "X-Workout-ID": str(workout_id),
+                "X-Exercise-Count": str(len(selected_exercises)),
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Erreur inattendue lors de la génération automatique: {e}", exc_info=True
         )
         raise HTTPException(
             status_code=500,

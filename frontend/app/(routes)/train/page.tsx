@@ -8,22 +8,38 @@ import { AIAssistant } from '@/components/controls/AIAssistant'
 import { QuickSetup } from '@/components/controls/QuickSetup'
 import { ParameterizedSetup } from '@/components/controls/ParameterizedSetup'
 import { useTrainingStore } from '@/store/trainingStore'
+import { useWorkoutGeneration } from '@/hooks/useWorkoutGeneration'
 
 type AccordionSection = 'quick' | 'parameterized' | 'ia' | null
 
 export default function TrainPage() {
   const { session, player } = useTrainingStore()
   const [openSection, setOpenSection] = useState<AccordionSection>('quick')
+  const [trainingDuration, setTrainingDuration] = useState<number>(10)
+  const { isGenerating, error, videoUrl, progress, generateVideo, resetVideo } = useWorkoutGeneration()
 
   const toggleSection = (section: AccordionSection) => {
     setOpenSection(openSection === section ? null : section)
+  }
+
+  const handleGenerateTraining = async () => {
+    try {
+      await generateVideo(trainingDuration, 'Mon Entraînement')
+    } catch (error) {
+      console.error('Erreur lors de la génération:', error)
+    }
   }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4 md:p-6 bg-gray-50 min-h-screen">
       {/* Colonne gauche - Vidéo + Exercices */}
       <div className="flex-1 space-y-4 w-full lg:w-auto">
-        <VideoPlayer />
+        <VideoPlayer
+          videoUrl={videoUrl}
+          isGenerating={isGenerating}
+          progress={progress}
+          error={error}
+        />
         <ExerciseList />
       </div>
 
@@ -35,8 +51,12 @@ export default function TrainPage() {
           <label className="block text-sm text-gray-600 mb-2">Training duration</label>
           <input
             type="number"
+            value={trainingDuration}
+            onChange={(e) => setTrainingDuration(Number(e.target.value))}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 mb-4"
             placeholder="Minutes"
+            min="1"
+            max="60"
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -49,8 +69,12 @@ export default function TrainPage() {
           </div>
         </div>
 
-        <button className="w-full py-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
-          Generate training
+        <button
+          onClick={handleGenerateTraining}
+          disabled={isGenerating}
+          className="w-full py-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isGenerating ? `Génération... ${progress}%` : 'Generate training'}
         </button>
 
         {/* Quick Setup - Accordion */}

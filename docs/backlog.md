@@ -173,7 +173,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Tâches :**
 - [x] Créer projet : `npx create-next-app@latest frontend`
 - [x] Choisir : TypeScript, App Router, Tailwind CSS
-- [ ] Installer dépendances :
+- [x] Installer dépendances :
   - @shadcn/ui
   - zustand
   - @tanstack/react-query
@@ -278,11 +278,10 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Implémenter l'algorithme de création d'une session de workout
 
 **Tâches :**
-- [ ] Créer `components/layout/Header.tsx`
-- [ ] Créer navigation : Goals, Plan, Train
+- [x] algorithme de génération de workout
 
 **Critères d'acceptation :**
-- ✅
+- ✅ Tests de validation
 
 **Labels :** `frontend`, `ui`, `layout`, `p1-high`
 
@@ -296,7 +295,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - [ ] Création de la route
 
 **Critères d'acceptation :**
-- ✅
+- ✅ On peut charger une vidéo dans le front
 
 **Labels :** `frontend`, `ui`, `layout`, `p1-high`
 
