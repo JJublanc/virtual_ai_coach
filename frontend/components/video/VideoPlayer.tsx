@@ -174,6 +174,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               <button
                 onClick={skipBackward}
                 className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
+                title="Reculer de 10s"
               >
                 <SkipBack className="w-6 h-6 text-white" fill="white" />
               </button>
@@ -194,6 +195,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               <button
                 onClick={skipForward}
                 className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
+                title="Avancer de 10s"
               >
                 <SkipForward className="w-6 h-6 text-white" fill="white" />
               </button>
@@ -206,41 +208,14 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               <span className="text-white text-sm font-medium">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
-              <div className="flex items-center gap-2">
-                {/* Contrôles supplémentaires */}
-                <button
-                  onClick={skipBackward}
-                  className="p-1 text-white hover:text-gray-300 transition-colors"
-                  title="Reculer de 10s"
-                >
-                  <SkipBack className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={togglePlay}
-                  className="p-1 text-white hover:text-gray-300 transition-colors"
-                  title={isPlaying ? "Pause" : "Lecture"}
-                >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4" />
-                  ) : (
-                    <Play className="w-4 h-4" />
-                  )}
-                </button>
-                <button
-                  onClick={skipForward}
-                  className="p-1 text-white hover:text-gray-300 transition-colors"
-                  title="Avancer de 10s"
-                >
-                  <SkipForward className="w-4 h-4" />
-                </button>
-                <button className="p-1 text-white hover:text-gray-300 transition-colors">
-                  <Maximize2 className="w-4 h-4" />
-                </button>
-              </div>
+              <button className="text-white hover:text-gray-300 transition-colors">
+                <Maximize2 className="w-5 h-5" />
+              </button>
             </div>
             <div
-              className="h-2 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+              className="h-2 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:h-3 transition-all"
               onClick={handleProgressClick}
+              title="Cliquez pour naviguer dans la vidéo"
             >
               <div
                 className="h-full bg-green-400 rounded-full transition-all duration-300"

@@ -134,6 +134,33 @@ class WorkoutGenerationResponse(BaseModel):
     }
 
 
+class WorkoutExerciseDetail(BaseModel):
+    """Détail d'un exercice dans un workout"""
+
+    name: str = Field(..., description="Nom de l'exercice")
+    icon: str = Field(..., description="Icône de l'exercice")
+    duration: int = Field(..., description="Durée en secondes")
+    order: int = Field(..., description="Ordre dans la séquence")
+    difficulty: str = Field(..., description="Niveau de difficulté")
+
+
+class WorkoutDetailResponse(BaseModel):
+    """Réponse détaillée d'un workout avec ses exercices"""
+
+    workout_id: str = Field(..., description="ID unique du workout")
+    name: str = Field(..., description="Nom du workout")
+    total_duration: int = Field(..., description="Durée totale en secondes")
+    exercise_count: int = Field(..., description="Nombre d'exercices")
+    exercises: List[WorkoutExerciseDetail] = Field(
+        ..., description="Liste détaillée des exercices"
+    )
+    config: WorkoutConfig = Field(..., description="Configuration utilisée")
+
+
+# Store temporaire pour les workouts générés (en production, utiliser une DB)
+generated_workouts = {}
+
+
 async def stream_ffmpeg_output(
     command: List[str], concat_file: Path, timeout: int = GENERATION_TIMEOUT
 ):
@@ -569,7 +596,29 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         logger.info("Commande FFmpeg construite, démarrage du streaming")
         logger.info(f"Workout: {request.name} - {len(selected_exercises)} exercices")
 
-        # 7. Retourner la réponse en streaming
+        # 7. Stocker les détails du workout pour récupération ultérieure
+        workout_details = []
+        for i, exercise in enumerate(selected_exercises):
+            workout_details.append(
+                WorkoutExerciseDetail(
+                    name=exercise.name,
+                    icon=exercise.icon or "🏋️",
+                    duration=exercise.default_duration,
+                    order=i + 1,
+                    difficulty=exercise.difficulty.value,
+                )
+            )
+
+        generated_workouts[str(workout_id)] = WorkoutDetailResponse(
+            workout_id=str(workout_id),
+            name=request.name,
+            total_duration=request.total_duration,
+            exercise_count=len(selected_exercises),
+            exercises=workout_details,
+            config=request.config,
+        )
+
+        # 8. Retourner la réponse en streaming
         return StreamingResponse(
             stream_ffmpeg_output(command, concat_file, timeout=GENERATION_TIMEOUT),
             media_type="video/mp4",
@@ -591,3 +640,30 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
             status_code=500,
             detail=f"Erreur interne du serveur: {str(e)}",
         )
+
+
+@router.get("/workout-details/{workout_id}", response_model=WorkoutDetailResponse)
+async def get_workout_details(workout_id: str):
+    """
+    Récupère les détails d'un workout généré par son ID.
+
+    Args:
+        workout_id: ID unique du workout généré
+
+    Returns:
+        WorkoutDetailResponse: Détails complets du workout avec la liste des exercices
+
+    Raises:
+        HTTPException 404: Si le workout n'est pas trouvé
+
+    Example:
+        ```bash
+        curl -X GET "http://localhost:8000/api/workout-details/12345678-1234-1234-1234-123456789012"
+        ```
+    """
+    if workout_id not in generated_workouts:
+        raise HTTPException(
+            status_code=404, detail=f"Workout avec ID '{workout_id}' non trouvé"
+        )
+
+    return generated_workouts[workout_id]

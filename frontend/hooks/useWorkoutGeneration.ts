@@ -60,7 +60,24 @@ export function useWorkoutGeneration() {
         }, 500)
 
         // Appeler l'API pour générer la vidéo
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/generate-auto-workout-video`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        console.log('URL API utilisée:', `${apiUrl}/api/generate-auto-workout-video`)
+        console.log('Configuration envoyée:', {
+          config: {
+            intensity: config.intensity,
+            intervals: config.intervals,
+            no_repeat: config.no_repeat,
+            no_jump: config.no_jump,
+            exercice_intensity_levels: config.intensity_levels,
+            include_warm_up: config.include_warm_up,
+            include_cool_down: config.include_cool_down,
+            target_duration: config.target_duration,
+          },
+          total_duration: totalDurationSeconds,
+          name: workoutName,
+        })
+
+        const response = await fetch(`${apiUrl}/api/generate-auto-workout-video`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,14 +98,18 @@ export function useWorkoutGeneration() {
           }),
         })
 
+        console.log('Réponse API reçue:', response.status, response.statusText)
+        console.log('Headers de réponse:', Object.fromEntries(response.headers.entries()))
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
+          console.error('Erreur API:', error)
           throw new Error(error.detail || `HTTP error! status: ${response.status}`)
         }
 
         // Récupérer les headers avec les informations du workout
         const workoutId = response.headers.get('X-Workout-ID')
-        const exerciseCount = parseInt(response.headers.get('X-Exercise-Count') || '0')
+        console.log('Workout ID extrait des headers:', workoutId)
 
         // Arrêter la progression simulée
         clearInterval(progressInterval)
@@ -97,21 +118,47 @@ export function useWorkoutGeneration() {
         const videoBlob = await response.blob()
         const videoUrl = URL.createObjectURL(videoBlob)
 
-        // Générer une séquence d'exercices simulée basée sur la configuration
-        // En attendant d'avoir l'API qui retourne la séquence réelle
-        const mockExercises = generateMockExerciseSequence(exerciseCount, totalDurationSeconds)
+        // Récupérer les détails réels du workout depuis le backend
+        let workoutExercises: WorkoutExercise[] = []
+        let workoutInfo = null
+
+        if (workoutId) {
+          try {
+            console.log('Récupération des détails du workout:', workoutId)
+            const detailsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/workout-details/${workoutId}`)
+            console.log('Réponse détails workout:', detailsResponse.status)
+            if (detailsResponse.ok) {
+              const workoutDetails = await detailsResponse.json()
+              console.log('Détails du workout reçus:', workoutDetails)
+              workoutExercises = workoutDetails.exercises.map((ex: any) => ({
+                name: ex.name,
+                icon: ex.icon,
+                duration: ex.duration,
+                order: ex.order,
+              }))
+              workoutInfo = {
+                name: workoutDetails.name,
+                totalDuration: workoutDetails.total_duration,
+                exerciseCount: workoutDetails.exercise_count,
+              }
+              console.log('Exercices mappés:', workoutExercises)
+            } else {
+              console.error('Erreur lors de la récupération des détails:', detailsResponse.status)
+            }
+          } catch (error) {
+            console.warn('Impossible de récupérer les détails du workout:', error)
+          }
+        } else {
+          console.warn('Aucun workout ID reçu dans les headers')
+        }
 
         setState({
           isGenerating: false,
           error: null,
           videoUrl,
           progress: 100,
-          workoutExercises: mockExercises,
-          workoutInfo: {
-            name: workoutName,
-            totalDuration: totalDurationSeconds,
-            exerciseCount,
-          },
+          workoutExercises,
+          workoutInfo,
         })
 
         return videoUrl
@@ -149,33 +196,4 @@ export function useWorkoutGeneration() {
     generateVideo,
     resetVideo,
   }
-}
-
-// Fonction utilitaire pour générer une séquence d'exercices simulée
-function generateMockExerciseSequence(exerciseCount: number, totalDuration: number): WorkoutExercise[] {
-  const exerciseTemplates = [
-    { name: 'Push-ups', icon: '💪' },
-    { name: 'Air Squat', icon: '🦵' },
-    { name: 'Plank', icon: '🏋️' },
-    { name: 'Burpees', icon: '🔥' },
-    { name: 'Mountain Climber', icon: '⛰️' },
-    { name: 'Jumping Jacks', icon: '⚡' },
-    { name: 'Lunges', icon: '🚶' },
-    { name: 'High Knees', icon: '🏃' },
-  ]
-
-  const exercises: WorkoutExercise[] = []
-  const avgDuration = Math.floor(totalDuration / exerciseCount)
-
-  for (let i = 0; i < exerciseCount; i++) {
-    const template = exerciseTemplates[i % exerciseTemplates.length]
-    exercises.push({
-      name: template.name,
-      icon: template.icon,
-      duration: avgDuration,
-      order: i + 1,
-    })
-  }
-
-  return exercises
 }

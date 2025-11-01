@@ -17,6 +17,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[
+        "X-Workout-ID",
+        "X-Exercise-Count",
+    ],  # Exposer les headers personnalisés
 )
 
 # Inclusion des routers
