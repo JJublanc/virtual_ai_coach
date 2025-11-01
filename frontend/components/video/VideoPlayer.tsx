@@ -1,7 +1,7 @@
 // components/video/VideoPlayer.tsx
 'use client'
 
-import { Play, Maximize2, Loader2 } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Maximize2, Loader2 } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 
 interface VideoPlayerProps {
@@ -31,6 +31,28 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
         videoRef.current.play()
       }
       setIsPlaying(!isPlaying)
+    }
+  }
+
+  const skipBackward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10)
+    }
+  }
+
+  const skipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10)
+    }
+  }
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (videoRef.current && duration > 0) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const clickX = e.clientX - rect.left
+      const clickRatio = clickX / rect.width
+      const newTime = clickRatio * duration
+      videoRef.current.currentTime = newTime
     }
   }
 
@@ -145,17 +167,38 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             </div>
           </div>
 
-          {/* Play button - center */}
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center">
+          {/* Contrôles de lecture - centre */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-center gap-4">
+              {/* Bouton reculer */}
+              <button
+                onClick={skipBackward}
+                className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
+              >
+                <SkipBack className="w-6 h-6 text-white" fill="white" />
+              </button>
+
+              {/* Bouton play/pause principal */}
               <button
                 onClick={togglePlay}
                 className="w-20 h-20 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/50 hover:bg-white/30 transition-colors"
               >
-                <Play className="w-10 h-10 text-white ml-1" fill="white" />
+                {isPlaying ? (
+                  <Pause className="w-10 h-10 text-white" fill="white" />
+                ) : (
+                  <Play className="w-10 h-10 text-white ml-1" fill="white" />
+                )}
+              </button>
+
+              {/* Bouton avancer */}
+              <button
+                onClick={skipForward}
+                className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
+              >
+                <SkipForward className="w-6 h-6 text-white" fill="white" />
               </button>
             </div>
-          )}
+          </div>
 
           {/* Progress bar - bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -163,11 +206,42 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               <span className="text-white text-sm font-medium">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
-              <button className="text-white hover:text-gray-300 transition-colors">
-                <Maximize2 className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Contrôles supplémentaires */}
+                <button
+                  onClick={skipBackward}
+                  className="p-1 text-white hover:text-gray-300 transition-colors"
+                  title="Reculer de 10s"
+                >
+                  <SkipBack className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={togglePlay}
+                  className="p-1 text-white hover:text-gray-300 transition-colors"
+                  title={isPlaying ? "Pause" : "Lecture"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  onClick={skipForward}
+                  className="p-1 text-white hover:text-gray-300 transition-colors"
+                  title="Avancer de 10s"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
+                <button className="p-1 text-white hover:text-gray-300 transition-colors">
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-2 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+              onClick={handleProgressClick}
+            >
               <div
                 className="h-full bg-green-400 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}

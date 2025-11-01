@@ -16,7 +16,7 @@ export default function TrainPage() {
   const { session, player } = useTrainingStore()
   const [openSection, setOpenSection] = useState<AccordionSection>('quick')
   const [trainingDuration, setTrainingDuration] = useState<number>(10)
-  const { isGenerating, error, videoUrl, progress, generateVideo, resetVideo } = useWorkoutGeneration()
+  const { isGenerating, error, videoUrl, progress, workoutExercises, workoutInfo, generateVideo, resetVideo } = useWorkoutGeneration()
 
   const toggleSection = (section: AccordionSection) => {
     setOpenSection(openSection === section ? null : section)
@@ -40,7 +40,10 @@ export default function TrainPage() {
           progress={progress}
           error={error}
         />
-        <ExerciseList />
+        <ExerciseList
+          exercises={workoutExercises}
+          workoutInfo={workoutInfo}
+        />
       </div>
 
       {/* Colonne droite - Contrôles */}
