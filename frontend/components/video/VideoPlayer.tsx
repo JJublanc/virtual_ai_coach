@@ -26,6 +26,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentExercise, setCurrentExercise] = useState<WorkoutExercise | null>(null)
+  const [exerciseTimeRemaining, setExerciseTimeRemaining] = useState(0)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -71,12 +72,16 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       const time = videoRef.current.currentTime
       setCurrentTime(time)
 
-      // Calculer quel exercice est en cours
+      // Calculer quel exercice est en cours et le temps restant
       if (workoutExercises.length > 0) {
         let cumulativeTime = 0
         for (const exercise of workoutExercises) {
-          if (time >= cumulativeTime && time < cumulativeTime + exercise.duration) {
+          const exerciseEndTime = cumulativeTime + exercise.duration
+          if (time >= cumulativeTime && time < exerciseEndTime) {
             setCurrentExercise(exercise)
+            // Calculer le temps restant pour cet exercice
+            const timeRemainingInExercise = exerciseEndTime - time
+            setExerciseTimeRemaining(Math.ceil(timeRemainingInExercise))
             break
           }
           cumulativeTime += exercise.duration
@@ -181,13 +186,13 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 40}`}
-                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - progressPercentage / 100)}`}
+                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - (currentExercise ? (currentExercise.duration - exerciseTimeRemaining) / currentExercise.duration : 0))}`}
                   className="transition-all duration-300"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-lg font-bold">
-                  {formatTime(currentTime)}
+                <span className="text-white text-2xl font-bold">
+                  {exerciseTimeRemaining > 0 ? exerciseTimeRemaining : '0'}
                 </span>
               </div>
             </div>
