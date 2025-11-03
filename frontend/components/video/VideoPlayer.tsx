@@ -1,7 +1,7 @@
 // components/video/VideoPlayer.tsx
 'use client'
 
-import { Play, Pause, SkipBack, SkipForward, Maximize2, Loader2 } from 'lucide-react'
+import { Play, Pause, Maximize2, Loader2 } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 
 interface WorkoutExercise {
@@ -32,6 +32,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [duration, setDuration] = useState(0)
   const [currentExercise, setCurrentExercise] = useState<WorkoutExercise | null>(null)
   const [exerciseTimeRemaining, setExerciseTimeRemaining] = useState(0)
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(1)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -50,17 +51,6 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     }
   }
 
-  const skipBackward = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10)
-    }
-  }
-
-  const skipForward = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10)
-    }
-  }
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (videoRef.current && duration > 0) {
@@ -80,10 +70,12 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       // Calculer quel exercice est en cours et le temps restant
       if (workoutExercises.length > 0) {
         let cumulativeTime = 0
-        for (const exercise of workoutExercises) {
+        for (let i = 0; i < workoutExercises.length; i++) {
+          const exercise = workoutExercises[i]
           const exerciseEndTime = cumulativeTime + exercise.duration
           if (time >= cumulativeTime && time < exerciseEndTime) {
             setCurrentExercise(exercise)
+            setCurrentExerciseIndex(i + 1) // Index commence à 1
             // Calculer le temps restant pour cet exercice
             const timeRemainingInExercise = exerciseEndTime - time
             setExerciseTimeRemaining(Math.ceil(timeRemainingInExercise))
@@ -215,49 +207,41 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                 </span>
               </div>
             </div>
+
+            {/* Indicateur exercice actuel - sous le timer */}
+            <div className="mt-2 text-center">
+              <span className="text-white text-sm font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
+                {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.length}` : '1 / -'}
+              </span>
+            </div>
           </div>
 
           {/* Progress bar - bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex items-center justify-between mb-2">
+              {/* Temps écoulé à gauche */}
               <span className="text-white text-sm font-medium">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
+
+              {/* Contrôles de lecture - alignés au centre */}
+              <div className="flex items-center gap-2">
+                {/* Bouton play/pause */}
+                <button
+                  onClick={togglePlay}
+                  className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 hover:bg-white/30 transition-colors"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 text-white" fill="white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                  )}
+                </button>
+              </div>
+
+              {/* Bouton plein écran à droite */}
               <button className="text-white hover:text-gray-300 transition-colors">
                 <Maximize2 className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Contrôles de lecture - petits boutons au-dessus de la barre */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              {/* Bouton reculer */}
-              <button
-                onClick={skipBackward}
-                className="w-8 h-8 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
-                title="Reculer de 10s"
-              >
-                <SkipBack className="w-4 h-4 text-white" fill="white" />
-              </button>
-
-              {/* Bouton play/pause */}
-              <button
-                onClick={togglePlay}
-                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 hover:bg-white/30 transition-colors"
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 text-white" fill="white" />
-                ) : (
-                  <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
-                )}
-              </button>
-
-              {/* Bouton avancer */}
-              <button
-                onClick={skipForward}
-                className="w-8 h-8 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
-                title="Avancer de 10s"
-              >
-                <SkipForward className="w-4 h-4 text-white" fill="white" />
               </button>
             </div>
             <div
