@@ -764,6 +764,51 @@ async def start_workout_generation(request: GenerateWorkoutVideoRequest):
         )
 
 
+@router.get("/workout-exercises/{workout_id}")
+async def get_workout_exercises(workout_id: str):
+    """
+    Récupère la liste des exercices d'un workout généré.
+    Utilisé par le frontend pour afficher la liste des exercices.
+    """
+    logger.info(f"Récupération des exercices pour workout {workout_id}")
+
+    # Vérifier si le workout existe
+    workout_data = generated_workouts.get(workout_id)
+    if not workout_data:
+        logger.error(f"Workout {workout_id} non trouvé")
+        raise HTTPException(404, "Workout not found")
+
+    # Extraire les exercices
+    exercises = workout_data.get("exercises", [])
+
+    # Convertir les exercices en format frontend
+    workout_exercises = []
+    for i, exercise in enumerate(exercises):
+        workout_exercises.append(
+            {
+                "name": exercise.name,
+                "description": exercise.description or f"Exercice {exercise.name}",
+                "icon": getattr(
+                    exercise, "icon", "🏋️"
+                ),  # Utiliser l'icône de l'exercice
+                "duration": getattr(
+                    exercise, "default_duration", 60
+                ),  # Utiliser la durée par défaut
+                "order": i + 1,
+            }
+        )
+
+    logger.info(
+        f"Retour de {len(workout_exercises)} exercices pour workout {workout_id}"
+    )
+
+    return {
+        "workout_id": workout_id,
+        "exercises": workout_exercises,
+        "total_exercises": len(workout_exercises),
+    }
+
+
 # ============================================================================
 # NOUVEAUX ENDPOINTS POUR STREAMING PROGRESSIF - PHASE 1.4
 # ============================================================================

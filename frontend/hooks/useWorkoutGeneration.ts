@@ -108,12 +108,28 @@ export function useWorkoutGeneration() {
           }))
         }, 1000)
 
-        // 5. Récupérer les détails du workout (si disponibles)
+        // 5. Récupérer les détails du workout (exercices générés)
         let workoutExercises: WorkoutExercise[] = []
         let workoutInfo = {
           name: workoutName,
           totalDuration: totalDurationSeconds,
           exerciseCount: startResult.total_exercises || 0,
+        }
+
+        // Récupérer les exercices du workout depuis le backend
+        try {
+          console.log('📋 Récupération des exercices du workout...')
+          const exercisesResponse = await fetch(`${apiUrl}/api/workout-exercises/${workoutId}`)
+          if (exercisesResponse.ok) {
+            const exercisesData = await exercisesResponse.json()
+            workoutExercises = exercisesData.exercises || []
+            console.log('✅ Exercices récupérés:', workoutExercises.length)
+          } else {
+            console.warn('⚠️ Impossible de récupérer les exercices, utilisation de données par défaut')
+          }
+        } catch (exerciseError) {
+          console.warn('⚠️ Erreur lors de la récupération des exercices:', exerciseError)
+          // Continuer sans les exercices, ce n'est pas bloquant pour le streaming
         }
 
         // Arrêter la progression simulée après un délai

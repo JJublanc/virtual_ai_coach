@@ -18,9 +18,14 @@ interface VideoPlayerProps {
   progress?: number
   error?: string | null
   workoutExercises?: WorkoutExercise[]
+  workoutInfo?: {
+    name: string
+    totalDuration: number
+    exerciseCount: number
+  } | null
 }
 
-export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [] }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [], workoutInfo }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -92,9 +97,23 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration)
+      // Utiliser la durée totale prévue du workout si disponible,
+      // sinon utiliser la durée de la vidéo HTML5
+      const totalWorkoutDuration = workoutInfo?.totalDuration || 0
+      if (totalWorkoutDuration > 0) {
+        setDuration(totalWorkoutDuration)
+      } else {
+        setDuration(videoRef.current.duration)
+      }
     }
   }
+
+  // Mettre à jour la durée quand workoutInfo change
+  useEffect(() => {
+    if (workoutInfo?.totalDuration) {
+      setDuration(workoutInfo.totalDuration)
+    }
+  }, [workoutInfo])
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
