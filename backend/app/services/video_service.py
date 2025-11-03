@@ -214,7 +214,7 @@ class VideoService:
                     "-pix_fmt",
                     "yuv420p",  # Format pixel compatible
                     "-movflags",
-                    "frag_keyframe+empty_moov",  # Optimisation streaming
+                    "faststart+frag_keyframe+empty_moov+dash",  # Optimisation streaming progressif
                     "-an",  # Pas d'audio pour l'instant
                     "-y",  # Overwrite output file
                     str(output_path),

@@ -51,34 +51,19 @@ export function useWorkoutGeneration() {
       try {
         // Convertir la durée de minutes en secondes
         const totalDurationSeconds = trainingDuration * 60
-
-        // Simuler la progression (car le streaming ne fournit pas de progression réelle)
-        const progressInterval = setInterval(() => {
-          setState(prev => ({
-            ...prev,
-            progress: Math.min(prev.progress + 5, 90),
-          }))
-        }, 500)
-
-        // Appeler l'API pour générer la vidéo
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        console.log('URL API utilisée:', `${apiUrl}/api/generate-auto-workout-video`)
-        console.log('Configuration envoyée:', {
-          config: {
-            intensity: config.intensity,
-            intervals: config.intervals,
-            no_repeat: config.no_repeat,
-            no_jump: config.no_jump,
-            exercice_intensity_levels: config.intensity_levels,
-            include_warm_up: config.include_warm_up,
-            include_cool_down: config.include_cool_down,
-            target_duration: config.target_duration,
-          },
-          total_duration: totalDurationSeconds,
-          name: workoutName,
-        })
 
-        const response = await fetch(`${apiUrl}/api/generate-auto-workout-video`, {
+        // ============================================================================
+        // NOUVEAU WORKFLOW STREAMING PROGRESSIF - PHASE 1.3
+        // ============================================================================
+
+        // 1. Générer un ID UUID valide pour ce workout
+        const workoutId = crypto.randomUUID()
+        console.log('🚀 Démarrage streaming progressif pour workout:', workoutId)
+
+        // 2. Démarrer la génération en arrière-plan
+        console.log('📡 Démarrage génération en arrière-plan...')
+        const startResponse = await fetch(`${apiUrl}/api/start-workout-generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -96,68 +81,53 @@ export function useWorkoutGeneration() {
             },
             total_duration: totalDurationSeconds,
             name: workoutName,
+            workout_id: workoutId,
           }),
         })
 
-        console.log('Réponse API reçue:', response.status, response.statusText)
-        console.log('Headers de réponse:', Object.fromEntries(response.headers.entries()))
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
-          console.error('Erreur API:', error)
-          throw new Error(error.detail || `HTTP error! status: ${response.status}`)
+        if (!startResponse.ok) {
+          const error = await startResponse.json().catch(() => ({ detail: 'Unknown error' }))
+          console.error('❌ Erreur démarrage génération:', error)
+          throw new Error(error.detail || `HTTP error! status: ${startResponse.status}`)
         }
 
-        // Récupérer les headers avec les informations du workout
-        const workoutId = response.headers.get('X-Workout-ID')
-        console.log('Workout ID extrait des headers:', workoutId)
+        const startResult = await startResponse.json()
+        console.log('✅ Génération démarrée:', startResult)
 
-        // Arrêter la progression simulée
-        clearInterval(progressInterval)
+        // 3. Créer immédiatement l'URL de streaming (pas d'attente !)
+        const videoUrl = `${apiUrl}/api/stream-workout/${workoutId}`
+        console.log('🎥 URL de streaming créée:', videoUrl)
 
-        // Créer une URL pour le blob vidéo
-        const videoBlob = await response.blob()
-        const videoUrl = URL.createObjectURL(videoBlob)
+        // 4. Simuler une progression plus réaliste (démarrage rapide)
+        setState(prev => ({ ...prev, progress: 10 }))
 
-        // Récupérer les détails réels du workout depuis le backend
+        const progressInterval = setInterval(() => {
+          setState(prev => ({
+            ...prev,
+            progress: Math.min(prev.progress + 3, 85), // Progression plus lente mais continue
+          }))
+        }, 1000)
+
+        // 5. Récupérer les détails du workout (si disponibles)
         let workoutExercises: WorkoutExercise[] = []
-        let workoutInfo = null
-
-        if (workoutId) {
-          try {
-            console.log('Récupération des détails du workout:', workoutId)
-            const detailsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/workout-details/${workoutId}`)
-            console.log('Réponse détails workout:', detailsResponse.status)
-            if (detailsResponse.ok) {
-              const workoutDetails = await detailsResponse.json()
-              console.log('Détails du workout reçus:', workoutDetails)
-              workoutExercises = workoutDetails.exercises.map((ex: any) => ({
-                name: ex.name,
-                description: ex.description,
-                icon: ex.icon,
-                duration: ex.duration,
-                order: ex.order,
-              }))
-              workoutInfo = {
-                name: workoutDetails.name,
-                totalDuration: workoutDetails.total_duration,
-                exerciseCount: workoutDetails.exercise_count,
-              }
-              console.log('Exercices mappés:', workoutExercises)
-            } else {
-              console.error('Erreur lors de la récupération des détails:', detailsResponse.status)
-            }
-          } catch (error) {
-            console.warn('Impossible de récupérer les détails du workout:', error)
-          }
-        } else {
-          console.warn('Aucun workout ID reçu dans les headers')
+        let workoutInfo = {
+          name: workoutName,
+          totalDuration: totalDurationSeconds,
+          exerciseCount: startResult.total_exercises || 0,
         }
+
+        // Arrêter la progression simulée après un délai
+        setTimeout(() => {
+          clearInterval(progressInterval)
+          setState(prev => ({ ...prev, progress: 100 }))
+        }, 5000) // 5 secondes pour simuler le démarrage
+
+        console.log('🎯 Streaming progressif configuré - la vidéo peut commencer à jouer immédiatement')
 
         setState({
-          isGenerating: false,
+          isGenerating: false, // ✨ IMPORTANT: On n'est plus "en génération" côté UX
           error: null,
-          videoUrl,
+          videoUrl, // ✨ URL directe vers le stream, pas de blob !
           progress: 100,
           workoutExercises,
           workoutInfo,
@@ -180,9 +150,8 @@ export function useWorkoutGeneration() {
   )
 
   const resetVideo = useCallback(() => {
-    if (state.videoUrl) {
-      URL.revokeObjectURL(state.videoUrl)
-    }
+    // Note: Plus besoin de révoquer l'URL car nous utilisons maintenant
+    // des URLs directes vers l'API au lieu de blob URLs
     setState({
       isGenerating: false,
       error: null,
@@ -191,7 +160,7 @@ export function useWorkoutGeneration() {
       workoutExercises: [],
       workoutInfo: null,
     })
-  }, [state.videoUrl])
+  }, [])
 
   return {
     ...state,

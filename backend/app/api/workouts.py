@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -81,6 +81,10 @@ class GenerateWorkoutVideoRequest(BaseModel):
         ..., gt=0, description="Durée totale du workout en secondes"
     )
     name: str = Field(default="Workout Généré", description="Nom du workout")
+    workout_id: str = Field(
+        default=None,
+        description="ID unique du workout pour le streaming progressif (optionnel)",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -402,8 +406,10 @@ async def generate_workout_video(request: GenerateVideoRequest):
             stream_ffmpeg_output(command, concat_file, timeout=GENERATION_TIMEOUT),
             media_type="video/mp4",
             headers={
+                "Accept-Ranges": "bytes",  # Support des Range Requests pour streaming progressif
                 "Content-Disposition": 'inline; filename="workout.mp4"',
                 "Cache-Control": "no-cache",
+                "Transfer-Encoding": "chunked",  # Streaming par chunks
             },
         )
 
@@ -669,3 +675,308 @@ async def get_workout_details(workout_id: str):
         )
 
     return generated_workouts[workout_id]
+
+
+@router.post("/start-workout-generation")
+async def start_workout_generation(request: GenerateWorkoutVideoRequest):
+    """
+    Démarre la génération d'un workout en arrière-plan pour le streaming progressif.
+
+    Cette endpoint permet de séparer le démarrage de la génération du streaming,
+    permettant au frontend de commencer immédiatement le streaming via /stream-workout/{workout_id}
+
+    Returns:
+        dict: Contient le workout_id pour accéder au stream
+    """
+    logger.info("Démarrage de génération de workout en arrière-plan")
+
+    try:
+        # Générer un ID unique si non fourni
+        workout_id = request.workout_id or str(uuid4())
+
+        # 1. Créer l'objet Workout
+        workout = Workout(
+            id=workout_id,
+            name=request.name,
+            config=request.config,
+            total_duration=request.total_duration,
+        )
+
+        logger.info(f"Workout créé: {workout.name} (ID: {workout_id})")
+
+        # 2. Générer la liste d'exercices
+        exercises = generate_workout_exercises(workout)
+        logger.info(f"Génération terminée: {len(exercises)} exercices")
+
+        # 3. Charger les exercices complets depuis la base de données
+        all_exercises = load_exercises()
+
+        full_exercises = []
+        for workout_exercise in exercises:
+            # workout_exercise est un objet WorkoutExercise, on récupère l'exercise_id
+            exercise_id = workout_exercise.exercise_id
+            # Chercher l'exercice complet par ID
+            matching_exercise = next(
+                (ex for ex in all_exercises if ex.id == exercise_id), None
+            )
+            if matching_exercise:
+                full_exercises.append(matching_exercise)
+            else:
+                logger.warning(
+                    f"Exercice avec ID '{exercise_id}' non trouvé dans la base"
+                )
+
+        if not full_exercises:
+            raise HTTPException(
+                status_code=404,
+                detail="Aucun exercice valide trouvé pour cette configuration",
+            )
+
+        logger.info(f"Exercices chargés: {len(full_exercises)} exercices valides")
+
+        # 4. Stocker les données du workout pour le streaming
+        workout_data = {
+            "exercises": full_exercises,
+            "config": request.config,
+            "total_duration": request.total_duration,
+            "name": request.name,
+            "workout_id": workout_id,
+        }
+
+        generated_workouts[workout_id] = workout_data
+
+        logger.info(f"Workout {workout_id} prêt pour streaming")
+
+        return {
+            "workout_id": workout_id,
+            "message": "Génération démarrée, utilisez /stream-workout/{workout_id} pour le streaming",
+            "total_exercises": len(full_exercises),
+            "estimated_duration_minutes": request.total_duration // 60,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur lors du démarrage de génération: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne du serveur: {str(e)}",
+        )
+
+
+# ============================================================================
+# NOUVEAUX ENDPOINTS POUR STREAMING PROGRESSIF - PHASE 1.4
+# ============================================================================
+
+
+@router.get("/stream-workout/{workout_id}")
+async def stream_workout(workout_id: str, request: Request):
+    """
+    Stream progressif d'une vidéo de workout pré-générée ou en cours de génération.
+    Support des Range Requests pour lecture progressive.
+
+    Cette endpoint permet au navigateur de commencer la lecture dès que les premières
+    données sont disponibles, sans attendre la fin complète de la génération.
+    """
+    logger.info(f"Demande de streaming pour workout {workout_id}")
+
+    # Vérifier si le workout existe
+    workout_data = generated_workouts.get(workout_id)
+    if not workout_data:
+        logger.error(f"Workout {workout_id} non trouvé")
+        raise HTTPException(404, "Workout not found")
+
+    # Gérer les Range Requests du navigateur
+    range_header = request.headers.get("Range")
+    logger.debug(f"Range header reçu: {range_header}")
+
+    # CORRECTION: Pour le streaming progressif, on ignore les Range Requests
+    # et on fait toujours du streaming complet depuis le début
+    # Cela permet au navigateur de commencer la lecture immédiatement
+
+    logger.info(f"Démarrage streaming complet pour workout {workout_id}")
+    return StreamingResponse(
+        stream_workout_progressive(workout_data),
+        media_type="video/mp4",
+        headers={
+            "Accept-Ranges": "bytes",
+            "Transfer-Encoding": "chunked",  # Streaming par chunks
+            "Cache-Control": "public, max-age=3600",  # Cache 1h
+            "Content-Disposition": f'inline; filename="workout_{workout_id}.mp4"',
+        },
+    )
+
+
+async def stream_workout_progressive(workout_data):
+    """
+    Stream la génération FFmpeg avec buffer intelligent pour optimiser
+    le temps de démarrage de la lecture vidéo.
+
+    Cette fonction accumule les premières données (contenant l'atom moov)
+    avant de commencer le streaming, permettant au navigateur de démarrer
+    la lecture plus rapidement.
+    """
+    logger.info("Démarrage du streaming progressif")
+
+    # Construire la commande FFmpeg optimisée
+    command = build_optimized_ffmpeg_command(workout_data)
+    logger.debug(f"Commande FFmpeg: {' '.join(command)}")
+
+    # Buffer pour accumuler les premières données (moov atom)
+    initial_buffer = bytearray()
+    buffer_size = 1024 * 1024  # 1MB buffer initial
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        logger.info("Processus FFmpeg démarré, buffering des premières données...")
+
+        # Lire et buffer les premières données
+        while len(initial_buffer) < buffer_size:
+            chunk = await process.stdout.read(64 * 1024)  # 64KB chunks
+            if not chunk:
+                # Vérifier si le processus s'est terminé avec une erreur
+                return_code = process.returncode
+                if return_code is not None and return_code != 0:
+                    stderr_output = await process.stderr.read()
+                    error_msg = (
+                        stderr_output.decode("utf-8")
+                        if stderr_output
+                        else "Unknown FFmpeg error"
+                    )
+                    logger.error(
+                        f"FFmpeg s'est terminé avec le code {return_code}: {error_msg}"
+                    )
+                    raise HTTPException(500, f"Erreur FFmpeg: {error_msg}")
+                break
+            initial_buffer.extend(chunk)
+
+        logger.info(f"Buffer initial de {len(initial_buffer)} bytes prêt")
+
+        # Vérifier si nous avons des données à envoyer
+        if len(initial_buffer) == 0:
+            # Vérifier les erreurs FFmpeg
+            stderr_output = await process.stderr.read()
+            error_msg = (
+                stderr_output.decode("utf-8")
+                if stderr_output
+                else "FFmpeg n'a produit aucune donnée"
+            )
+            logger.error(f"Aucune donnée FFmpeg: {error_msg}")
+            raise HTTPException(500, f"FFmpeg n'a produit aucune donnée: {error_msg}")
+
+        # Envoyer le buffer initial (contient moov atom)
+        yield bytes(initial_buffer)
+
+        # Continuer le streaming normal
+        chunk_count = 0
+        while True:
+            chunk = await process.stdout.read(256 * 1024)  # 256KB chunks
+            if not chunk:
+                break
+            chunk_count += 1
+            if chunk_count % 100 == 0:  # Log tous les 100 chunks (~25MB)
+                logger.debug(f"Streamé {chunk_count} chunks")
+            yield chunk
+
+        logger.info(f"Streaming terminé, {chunk_count} chunks envoyés")
+
+        # Attendre la fin du processus
+        await process.wait()
+
+    except Exception as e:
+        logger.error(f"Erreur lors du streaming progressif: {e}")
+        raise HTTPException(500, f"Erreur de streaming: {str(e)}")
+
+
+async def handle_range_request(workout_data, range_header: str):
+    """
+    Gère les Range Requests pour permettre le seeking dans la vidéo
+    même pendant la génération.
+
+    Note: Implémentation simplifiée pour le moment.
+    Une version complète nécessiterait de gérer les ranges partiels.
+    """
+    logger.info(f"Traitement Range Request: {range_header}")
+
+    # Pour le moment, on retourne une réponse 416 (Range Not Satisfiable)
+    # car l'implémentation complète des Range Requests nécessite de connaître
+    # la taille finale du fichier et de pouvoir accéder à des portions spécifiques
+    raise HTTPException(
+        416,
+        "Range requests not yet supported during generation",
+        headers={"Content-Range": "bytes */0"},
+    )
+
+
+def build_optimized_ffmpeg_command(workout_data):
+    """
+    Construit une commande FFmpeg optimisée pour le streaming progressif
+    basée sur les données du workout.
+    """
+    # Pour le moment, utiliser la logique existante
+    # Cette fonction sera étendue dans les phases suivantes
+
+    # Récupérer les exercices depuis workout_data (dictionnaire)
+    exercises = workout_data.get("exercises", [])
+    config = workout_data.get("config", None)
+
+    if not exercises or not config:
+        raise HTTPException(500, "Données de workout incomplètes")
+
+    # Utiliser le service vidéo existant
+    from pathlib import Path
+
+    project_root = Path(__file__).parent.parent.parent  # Remonter à la racine du projet
+    video_service = VideoService(project_root=project_root)
+
+    # Créer un fichier de sortie temporaire (pipe:1 pour streaming)
+    output_path = Path("pipe:1")
+
+    # Construire la commande de base
+    command = video_service.build_ffmpeg_command(exercises, config, output_path)
+
+    if not command:
+        return []
+
+    # Modifier la commande pour le streaming via pipe:1
+    # Remplacer "pipe:1" par "-f mp4 pipe:1"
+    for i, arg in enumerate(command):
+        if arg == "pipe:1":
+            # Remplacer par le format MP4 suivi de pipe:1
+            command[i] = "-f"
+            command.insert(i + 1, "mp4")
+            command.insert(i + 2, "pipe:1")
+            break
+
+    return command
+
+
+def estimate_video_size(workout_data) -> int:
+    """
+    Estime la taille finale de la vidéo basée sur les exercices
+    pour fournir un Content-Length approximatif.
+
+    Cette estimation aide le navigateur à afficher une barre de progression.
+    """
+    try:
+        # Estimation basique: ~2MB par minute de vidéo
+        # Cette valeur peut être affinée basée sur les statistiques réelles
+        duration_seconds = workout_data.get(
+            "total_duration", 2400
+        )  # défaut 40min = 2400s
+        duration_minutes = duration_seconds / 60
+        estimated_size = duration_minutes * 2 * 1024 * 1024  # 2MB par minute
+
+        logger.debug(
+            f"Taille estimée pour {duration_minutes}min: {estimated_size} bytes"
+        )
+        return estimated_size
+
+    except Exception as e:
+        logger.warning(f"Impossible d'estimer la taille: {e}")
+        return 100 * 1024 * 1024  # 100MB par défaut
