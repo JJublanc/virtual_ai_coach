@@ -217,41 +217,6 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             </div>
           </div>
 
-          {/* Contrôles de lecture - centre */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center gap-4">
-              {/* Bouton reculer */}
-              <button
-                onClick={skipBackward}
-                className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
-                title="Reculer de 10s"
-              >
-                <SkipBack className="w-6 h-6 text-white" fill="white" />
-              </button>
-
-              {/* Bouton play/pause principal */}
-              <button
-                onClick={togglePlay}
-                className="w-20 h-20 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/50 hover:bg-white/30 transition-colors"
-              >
-                {isPlaying ? (
-                  <Pause className="w-10 h-10 text-white" fill="white" />
-                ) : (
-                  <Play className="w-10 h-10 text-white ml-1" fill="white" />
-                )}
-              </button>
-
-              {/* Bouton avancer */}
-              <button
-                onClick={skipForward}
-                className="w-12 h-12 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 hover:bg-white/30 transition-colors"
-                title="Avancer de 10s"
-              >
-                <SkipForward className="w-6 h-6 text-white" fill="white" />
-              </button>
-            </div>
-          </div>
-
           {/* Progress bar - bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex items-center justify-between mb-2">
@@ -260,6 +225,39 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               </span>
               <button className="text-white hover:text-gray-300 transition-colors">
                 <Maximize2 className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contrôles de lecture - petits boutons au-dessus de la barre */}
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {/* Bouton reculer */}
+              <button
+                onClick={skipBackward}
+                className="w-8 h-8 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
+                title="Reculer de 10s"
+              >
+                <SkipBack className="w-4 h-4 text-white" fill="white" />
+              </button>
+
+              {/* Bouton play/pause */}
+              <button
+                onClick={togglePlay}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 hover:bg-white/30 transition-colors"
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 text-white" fill="white" />
+                ) : (
+                  <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                )}
+              </button>
+
+              {/* Bouton avancer */}
+              <button
+                onClick={skipForward}
+                className="w-8 h-8 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
+                title="Avancer de 10s"
+              >
+                <SkipForward className="w-4 h-4 text-white" fill="white" />
               </button>
             </div>
             <div
