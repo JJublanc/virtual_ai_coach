@@ -9,6 +9,7 @@ import { QuickSetup } from '@/components/controls/QuickSetup'
 import { ParameterizedSetup } from '@/components/controls/ParameterizedSetup'
 import { useTrainingStore } from '@/store/trainingStore'
 import { useWorkoutGeneration } from '@/hooks/useWorkoutGeneration'
+import { useExercises } from '@/hooks/useExercises'
 
 type AccordionSection = 'quick' | 'parameterized' | 'ia' | null
 
@@ -18,6 +19,7 @@ export default function TrainPage() {
   const [trainingDuration, setTrainingDuration] = useState<number>(10)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number>(0)
   const { isGenerating, error, videoUrl, progress, workoutExercises, workoutInfo, generateVideo, resetVideo } = useWorkoutGeneration()
+  const { exercises: availableExercises } = useExercises()
 
   const toggleSection = (section: AccordionSection) => {
     setOpenSection(openSection === section ? null : section)
@@ -73,7 +75,7 @@ export default function TrainPage() {
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-gray-900">12</span>
+              <span className="text-3xl font-bold text-gray-900">{availableExercises?.length || 0}</span>
               <span className="text-sm text-gray-600">Available<br />exercices</span>
             </div>
             <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
