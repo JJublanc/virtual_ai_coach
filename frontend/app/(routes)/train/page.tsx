@@ -16,6 +16,7 @@ export default function TrainPage() {
   const { session, player } = useTrainingStore()
   const [openSection, setOpenSection] = useState<AccordionSection>('quick')
   const [trainingDuration, setTrainingDuration] = useState<number>(10)
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number>(0)
   const { isGenerating, error, videoUrl, progress, workoutExercises, workoutInfo, generateVideo, resetVideo } = useWorkoutGeneration()
 
   const toggleSection = (section: AccordionSection) => {
@@ -24,10 +25,15 @@ export default function TrainPage() {
 
   const handleGenerateTraining = async () => {
     try {
+      setCurrentExerciseIndex(0) // Reset l'exercice actuel
       await generateVideo(trainingDuration, 'Mon Entraînement')
     } catch (error) {
       console.error('Erreur lors de la génération:', error)
     }
+  }
+
+  const handleExerciseChange = (exerciseIndex: number) => {
+    setCurrentExerciseIndex(exerciseIndex)
   }
 
   return (
@@ -41,10 +47,12 @@ export default function TrainPage() {
           error={error}
           workoutExercises={workoutExercises}
           workoutInfo={workoutInfo}
+          onExerciseChange={handleExerciseChange}
         />
         <ExerciseList
           exercises={workoutExercises}
           workoutInfo={workoutInfo}
+          activeExerciseIndex={currentExerciseIndex}
         />
       </div>
 

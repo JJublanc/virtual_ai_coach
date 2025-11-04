@@ -23,9 +23,10 @@ interface VideoPlayerProps {
     totalDuration: number
     exerciseCount: number
   } | null
+  onExerciseChange?: (exerciseIndex: number) => void
 }
 
-export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [], workoutInfo }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [], workoutInfo, onExerciseChange }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -76,6 +77,10 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           if (time >= cumulativeTime && time < exerciseEndTime) {
             setCurrentExercise(exercise)
             setCurrentExerciseIndex(i + 1) // Index commence à 1
+            // Notifier le parent du changement d'exercice
+            if (onExerciseChange) {
+              onExerciseChange(i)
+            }
             // Calculer le temps restant pour cet exercice
             const timeRemainingInExercise = exerciseEndTime - time
             setExerciseTimeRemaining(Math.ceil(timeRemainingInExercise))

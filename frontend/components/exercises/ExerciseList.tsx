@@ -17,6 +17,7 @@ interface ExerciseListProps {
     totalDuration: number
     exerciseCount: number
   } | null
+  activeExerciseIndex?: number
 }
 
 
@@ -29,46 +30,55 @@ function formatDuration(seconds: number): string {
   return `${remainingSeconds}s`
 }
 
-export function ExerciseList({ exercises, workoutInfo }: ExerciseListProps) {
+export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }: ExerciseListProps) {
   return (
     <div className="space-y-4">
-      {/* En-tête avec informations du workout */}
-      {workoutInfo && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">{workoutInfo.name}</h3>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>{formatDuration(workoutInfo.totalDuration)}</span>
-            </div>
-            <span>•</span>
-            <span>{workoutInfo.exerciseCount} exercices</span>
-          </div>
-        </div>
-      )}
-
       {/* Liste des exercices */}
       {exercises && exercises.length > 0 ? (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
             Séquence d'exercices
           </h4>
-          {exercises.map((exercise, index) => (
-            <div
-              key={`${exercise.name}-${index}`}
-              className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full text-sm font-medium text-gray-600">
-                {exercise.order}
-              </div>
-              <span className="text-2xl">{exercise.icon}</span>
-              <div className="flex-1">
-                <span className="font-medium block">{exercise.name}</span>
-                <span className="text-sm text-gray-500">{formatDuration(exercise.duration)}</span>
-              </div>
-              <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+          <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+            <div className="space-y-2 pr-2">
+              {exercises.map((exercise, index) => {
+                const isActive = index === activeExerciseIndex
+                return (
+                  <div
+                    key={`${exercise.name}-${index}`}
+                    className={`flex items-center gap-3 rounded-lg p-4 transition-all ${
+                      isActive
+                        ? 'bg-green-50 border-2 border-green-300 shadow-lg scale-[1.02]'
+                        : 'bg-white border border-gray-200 hover:shadow-md'
+                    }`}
+                  >
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                      isActive
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {exercise.order}
+                    </div>
+                    <span className="text-2xl">{exercise.icon}</span>
+                    <div className="flex-1">
+                      <span className={`font-medium block ${
+                        isActive ? 'text-green-800' : 'text-gray-900'
+                      }`}>
+                        {exercise.name}
+                      </span>
+                      <span className={`text-sm ${
+                        isActive ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {formatDuration(exercise.duration)}
+                        {isActive && <span className="ml-2 font-medium">• En cours</span>}
+                      </span>
+                    </div>
+                    <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                  </div>
+                )
+              })}
             </div>
-          ))}
+          </div>
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
