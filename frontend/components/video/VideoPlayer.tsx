@@ -3,6 +3,7 @@
 
 import { Play, Pause, Maximize2, Loader2 } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
+import { getExerciseIcon, getIconColorClasses } from '@/lib/exerciseIcons'
 
 interface WorkoutExercise {
   name: string
@@ -205,7 +206,10 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             <div className="absolute top-4 left-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 w-80 transition-all duration-300">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-2xl flex-shrink-0">{currentExercise?.icon || "🏋️"}</span>
+                {(() => {
+                  const IconComponent = getExerciseIcon(currentExercise?.name || 'Training')
+                  return <IconComponent className="w-6 h-6 text-gray-700 flex-shrink-0" />
+                })()}
                 <h3 className="font-bold text-lg truncate">{currentExercise?.name || "Training"}</h3>
               </div>
               <button

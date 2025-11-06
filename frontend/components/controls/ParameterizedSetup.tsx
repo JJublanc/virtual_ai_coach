@@ -1,7 +1,7 @@
 // components/controls/ParameterizedSetup.tsx
 'use client'
 
-import { Settings } from 'lucide-react'
+import { Settings, Ban, ArrowUp } from 'lucide-react'
 import { useTrainingStore } from '@/store/trainingStore'
 import { IntensityCheckboxes } from './IntensityCheckboxes'
 import { WarmupOptions } from './WarmupOptions'
@@ -41,7 +41,9 @@ export function ParameterizedSetup() {
       <div className="space-y-2">
         <label className="flex items-center justify-between cursor-pointer">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🔁</span>
+            <div className="w-5 h-5 flex items-center justify-center">
+              <Ban className="w-5 h-5 text-gray-600" />
+            </div>
             <span className="text-sm">No repeat</span>
           </div>
           <div
@@ -60,7 +62,9 @@ export function ParameterizedSetup() {
 
         <label className="flex items-center justify-between cursor-pointer">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🤸</span>
+            <div className="w-5 h-5 flex items-center justify-center">
+              <ArrowUp className="w-5 h-5 text-gray-600" strokeWidth={2.5} />
+            </div>
             <span className="text-sm">No jump</span>
           </div>
           <div

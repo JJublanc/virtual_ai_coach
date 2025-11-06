@@ -2,6 +2,7 @@
 'use client'
 
 import { GripVertical, Trash2, Clock } from 'lucide-react'
+import { getExerciseIcon, getIconColorClasses } from '@/lib/exerciseIcons'
 
 interface WorkoutExercise {
   name: string
@@ -38,13 +39,16 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
       {exercises && exercises.length > 0 ? (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Séquence d'exercices
+            Exercise sequence
           </h4>
           <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
             <div className="space-y-2 pr-2">
               {exercises.map((exercise, index) => {
                 const isActive = index === activeExerciseIndex
                 const isBreak = exercise.is_break
+                const IconComponent = getExerciseIcon(exercise.name)
+                const iconColorClass = getIconColorClasses(isBreak)
+
                 return (
                   <div
                     key={`${exercise.name}-${index}`}
@@ -69,7 +73,13 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
                     }`}>
                       {exercise.order}
                     </div>
-                    <span className="text-2xl">{exercise.icon}</span>
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      isBreak
+                        ? 'bg-blue-50'
+                        : 'bg-gray-50'
+                    }`}>
+                      <IconComponent className={`w-5 h-5 ${iconColorClass}`} />
+                    </div>
                     <div className="flex-1">
                       <span className={`font-medium block ${
                         isBreak
@@ -84,7 +94,7 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
                           : isActive ? 'text-green-600' : 'text-gray-500'
                       }`}>
                         {formatDuration(exercise.duration)}
-                        {isActive && <span className="ml-2 font-medium">• En cours</span>}
+                        {isActive && <span className="ml-2 font-medium">• In progress</span>}
                       </span>
                     </div>
                     {!isBreak && <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />}
@@ -98,10 +108,13 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
         <div className="text-center py-8 text-gray-500">
           <div className="mb-4">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">🏋️</span>
+              {(() => {
+                const IconComponent = getExerciseIcon('Training')
+                return <IconComponent className="w-8 h-8 text-gray-600" />
+              })()}
             </div>
-            <h4 className="font-medium text-gray-700 mb-2">Aucun entraînement généré</h4>
-            <p className="text-sm">Configurez vos paramètres et cliquez sur "Generate training" pour voir votre séquence d'exercices personnalisée.</p>
+            <h4 className="font-medium text-gray-700 mb-2">No training generated</h4>
+            <p className="text-sm">Configure your settings and click "Generate training" to see your personalized exercise sequence.</p>
           </div>
         </div>
       )}

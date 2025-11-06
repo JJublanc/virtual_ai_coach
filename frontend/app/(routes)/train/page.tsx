@@ -27,10 +27,10 @@ export default function TrainPage() {
 
   const handleGenerateTraining = async () => {
     try {
-      setCurrentExerciseIndex(0) // Reset l'exercice actuel
-      await generateVideo(trainingDuration, 'Mon Entraînement')
+      setCurrentExerciseIndex(0) // Reset current exercise
+      await generateVideo(trainingDuration, 'My Training')
     } catch (error) {
-      console.error('Erreur lors de la génération:', error)
+      console.error('Error during generation:', error)
     }
   }
 
@@ -40,7 +40,7 @@ export default function TrainPage() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4 md:p-6 bg-gray-50 min-h-screen">
-      {/* Colonne gauche - Vidéo + Exercices */}
+      {/* Left column - Video + Exercises */}
       <div className="flex-1 space-y-4 w-full lg:w-auto">
         <VideoPlayer
           videoUrl={videoUrl}
@@ -89,7 +89,7 @@ export default function TrainPage() {
           disabled={isGenerating}
           className="w-full py-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isGenerating ? `Génération... ${progress}%` : 'Generate training'}
+          {isGenerating ? `Generating... ${progress}%` : 'Generate training'}
         </button>
 
         {/* Quick Setup - Accordion */}
