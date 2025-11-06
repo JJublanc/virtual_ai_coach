@@ -9,9 +9,10 @@ TODO: Migrer vers Supabase pour le chargement des exercices
 import json
 import random
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from uuid import uuid4
 
+from ..models.config import WorkoutConfig
 from ..models.exercise import Exercise, Difficulty
 from ..models.workout import Workout, WorkoutExercise
 
@@ -242,3 +243,67 @@ def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
         workout_exercises.append(workout_exercise)
 
     return workout_exercises
+
+
+def generate_workout_with_intervals(
+    exercises: List[Exercise], config: WorkoutConfig
+) -> List[Dict]:
+    """
+    Génère la liste de WorkoutExercise en alternant exercices et breaks.
+
+    Cette fonction crée la séquence complète d'un workout incluant :
+    - Les exercices avec leur durée de travail (work_time)
+    - Les périodes de repos (breaks) entre chaque exercice
+
+    Args:
+        exercises: Liste des exercices à inclure dans le workout
+        config: Configuration du workout avec les intervals work_time/rest_time
+
+    Returns:
+        Liste de dictionnaires avec structure :
+        [Exercice1, Break1, Exercice2, Break2, ...]
+
+    Example:
+        >>> exercises = [exercise1, exercise2]
+        >>> config = WorkoutConfig(intervals={"work_time": 40, "rest_time": 20})
+        >>> result = generate_workout_with_intervals(exercises, config)
+        >>> len(result)
+        3  # exercise1, break1, exercise2 (pas de break après le dernier)
+    """
+    work_time = config.intervals.get("work_time", 40)
+    rest_time = config.intervals.get("rest_time", 20)
+
+    workout_items = []
+    order = 0
+
+    for idx, exercise in enumerate(exercises):
+        # Ajouter l'exercice
+        workout_items.append(
+            {
+                "name": exercise.name,
+                "description": exercise.description or f"Exercice {exercise.name}",
+                "icon": getattr(exercise, "icon", "🏋️"),
+                "duration": work_time,
+                "order": order,
+                "is_break": False,
+                "exercise_id": exercise.id,
+            }
+        )
+        order += 1
+
+        # Ajouter un break (sauf après le dernier exercice)
+        if idx < len(exercises) - 1:
+            workout_items.append(
+                {
+                    "name": "Break",
+                    "description": "Période de récupération",
+                    "icon": "⏸️",
+                    "duration": rest_time,
+                    "order": order,
+                    "is_break": True,
+                    "exercise_id": "break",
+                }
+            )
+            order += 1
+
+    return workout_items

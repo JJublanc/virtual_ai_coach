@@ -10,6 +10,7 @@ interface WorkoutExercise {
   icon: string
   duration: number
   order: number
+  is_break?: boolean
 }
 
 interface VideoPlayerProps {
@@ -34,6 +35,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [currentExercise, setCurrentExercise] = useState<WorkoutExercise | null>(null)
   const [exerciseTimeRemaining, setExerciseTimeRemaining] = useState(0)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(1)
+  const [isExerciseDescriptionExpanded, setIsExerciseDescriptionExpanded] = useState(true)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -168,21 +170,64 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       {/* Contrôles vidéo - seulement si vidéo disponible */}
       {videoUrl && !isGenerating && !error && (
         <>
-          {/* Exercise description overlay - top left */}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-xs">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{currentExercise?.icon || "🏋️"}</span>
-                <h3 className="font-bold text-lg">{currentExercise?.name || "Entraînement"}</h3>
-              </div>
-              <button className="text-gray-600">▼</button>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              {currentExercise?.description || "Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !"}
-            </p>
-          </div>
+          {/* Overlay BREAK pendant les périodes de repos */}
+          {currentExercise?.is_break && (
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                backgroundImage: 'url(/sport_room.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Overlay semi-transparent pour assurer la lisibilité */}
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-          {/* Timer circle - top right */}
+              {/* Contenu centré */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-9xl font-bold text-white mb-8 tracking-wider drop-shadow-2xl">
+                    BREAK
+                  </h1>
+                  <div className="text-7xl font-mono text-blue-400 font-bold drop-shadow-lg">
+                    {Math.floor(exerciseTimeRemaining / 60)}:{(exerciseTimeRemaining % 60).toString().padStart(2, '0')}
+                  </div>
+                  <p className="text-3xl text-white/90 mt-6 drop-shadow-lg">
+                    Récupération en cours...
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Exercise description overlay - top left - masqué pendant les breaks */}
+          {!currentExercise?.is_break && (
+            <div className="absolute top-4 left-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 w-80 transition-all duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-2xl flex-shrink-0">{currentExercise?.icon || "🏋️"}</span>
+                <h3 className="font-bold text-lg truncate">{currentExercise?.name || "Entraînement"}</h3>
+              </div>
+              <button
+                onClick={() => setIsExerciseDescriptionExpanded(!isExerciseDescriptionExpanded)}
+                className="text-gray-600 hover:text-gray-800 transition-all duration-300 flex-shrink-0 ml-2"
+              >
+                <span className={`inline-block transition-transform duration-300 ${isExerciseDescriptionExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                  ▼
+                </span>
+              </button>
+            </div>
+            {isExerciseDescriptionExpanded && (
+              <div className="overflow-hidden transition-all duration-300">
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {currentExercise?.description || "Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !"}
+                </p>
+              </div>
+            )}
+            </div>
+          )}
+
+          {/* Timer circle - top right - couleur dynamique selon break ou exercice */}
           <div className="absolute top-4 right-4">
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -194,11 +239,12 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                   strokeWidth="8"
                   fill="none"
                 />
+                {/* Cercle de progression - couleur dynamique */}
                 <circle
                   cx="48"
                   cy="48"
                   r="40"
-                  stroke="#4ade80"
+                  stroke={currentExercise?.is_break ? "#60a5fa" : "#4ade80"}
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 40}`}
@@ -207,7 +253,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">
+                <span className={`text-2xl font-bold ${currentExercise?.is_break ? 'text-blue-400' : 'text-white'}`}>
                   {exerciseTimeRemaining > 0 ? exerciseTimeRemaining : '0'}
                 </span>
               </div>

@@ -122,6 +122,56 @@ class VideoService:
             logger.error(f"Erreur inattendue lors de l'ajustement de vitesse: {e}")
             return False
 
+    def generate_break_video(self, duration: int, output_path: Path) -> bool:
+        """
+        Génère une vidéo statique de break avec l'image sport_room.png
+
+        Args:
+            duration: Durée du break en secondes
+            output_path: Chemin de sortie de la vidéo
+
+        Returns:
+            bool: True si succès, False sinon
+        """
+        sport_room_image = self.project_root / "sport_room.png"
+
+        if not sport_room_image.exists():
+            logger.error(f"Image sport_room.png introuvable: {sport_room_image}")
+            return False
+
+        command = [
+            "ffmpeg",
+            "-loop",
+            "1",  # Boucler l'image
+            "-i",
+            str(sport_room_image),  # Image source
+            "-t",
+            str(duration),  # Durée en secondes
+            "-vf",
+            "scale=1920:1080",  # Résolution standard
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+            "-pix_fmt",
+            "yuv420p",
+            "-an",  # Pas d'audio
+            "-y",
+            str(output_path),
+        ]
+
+        try:
+            logger.debug(f"Génération vidéo break: {' '.join(command)}")
+            subprocess.run(command, check=True, capture_output=True, text=True)
+            logger.info(f"Vidéo de break générée: {output_path} ({duration}s)")
+            return True
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Erreur génération break: {e.stderr}")
+            return False
+        except Exception as e:
+            logger.error(f"Erreur inattendue génération break: {e}")
+            return False
+
     def build_ffmpeg_command(
         self,
         exercises: List[Exercise],
@@ -152,16 +202,20 @@ class VideoService:
         speed = self.get_speed_multiplier(config.intensity)
         logger.debug(f"Intensité: {config.intensity}, Vitesse: {speed}x")
 
+        # Récupérer les durées work/rest
+        work_time = config.intervals.get("work_time", 40)
+        rest_time = config.intervals.get("rest_time", 20)
+        logger.info(f"Intervals: work_time={work_time}s, rest_time={rest_time}s")
+
         # Créer un fichier temporaire de concaténation
         temp_dir = Path(tempfile.gettempdir())
         concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
         try:
-            # Préparer les chemins des vidéos
+            # Préparer les chemins des vidéos avec alternance exercices/breaks
             video_paths = []
             for idx, exercise in enumerate(exercises):
-                # Pour l'instant, on utilise des chemins locaux
-                # TODO: Adapter pour Supabase Storage URLs
+                # 1. Ajouter la vidéo d'exercice
                 video_path = self._resolve_video_path(exercise)
                 if video_path and video_path.exists():
                     video_paths.append(video_path)
@@ -170,6 +224,20 @@ class VideoService:
                     logger.warning(
                         f"Vidéo non trouvée pour {exercise.name}: {video_path}"
                     )
+                    continue
+
+                # 2. Ajouter une vidéo de break (sauf après le dernier exercice)
+                if idx < len(exercises) - 1:  # Pas de break après le dernier exercice
+                    break_video_path = temp_dir / f"break_{idx}_{os.getpid()}.mp4"
+                    if self.generate_break_video(rest_time, break_video_path):
+                        video_paths.append(break_video_path)
+                        logger.debug(
+                            f"Break {idx + 1}: {rest_time}s -> {break_video_path}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Impossible de générer la vidéo de break {idx + 1}"
+                        )
 
             if not video_paths:
                 logger.error("Aucune vidéo valide trouvée pour les exercices")

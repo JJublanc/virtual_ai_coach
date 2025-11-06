@@ -8,6 +8,7 @@ interface WorkoutExercise {
   icon: string
   duration: number
   order: number
+  is_break?: boolean
 }
 
 interface ExerciseListProps {
@@ -43,37 +44,50 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
             <div className="space-y-2 pr-2">
               {exercises.map((exercise, index) => {
                 const isActive = index === activeExerciseIndex
+                const isBreak = exercise.is_break
                 return (
                   <div
                     key={`${exercise.name}-${index}`}
                     className={`flex items-center gap-3 rounded-lg p-4 transition-all ${
-                      isActive
-                        ? 'bg-green-50 border-2 border-green-300 shadow-lg scale-[1.02]'
-                        : 'bg-white border border-gray-200 hover:shadow-md'
+                      isBreak
+                        ? isActive
+                          ? 'bg-blue-50 border-2 border-blue-400 shadow-lg scale-[1.02]'
+                          : 'bg-blue-50/50 border border-blue-200 hover:shadow-md'
+                        : isActive
+                          ? 'bg-green-50 border-2 border-green-300 shadow-lg scale-[1.02]'
+                          : 'bg-white border border-gray-200 hover:shadow-md'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                      isActive
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-600'
+                      isBreak
+                        ? isActive
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-200 text-blue-700'
+                        : isActive
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
                     }`}>
                       {exercise.order}
                     </div>
                     <span className="text-2xl">{exercise.icon}</span>
                     <div className="flex-1">
                       <span className={`font-medium block ${
-                        isActive ? 'text-green-800' : 'text-gray-900'
+                        isBreak
+                          ? isActive ? 'text-blue-800' : 'text-blue-700'
+                          : isActive ? 'text-green-800' : 'text-gray-900'
                       }`}>
                         {exercise.name}
                       </span>
                       <span className={`text-sm ${
-                        isActive ? 'text-green-600' : 'text-gray-500'
+                        isBreak
+                          ? isActive ? 'text-blue-600' : 'text-blue-500'
+                          : isActive ? 'text-green-600' : 'text-gray-500'
                       }`}>
                         {formatDuration(exercise.duration)}
                         {isActive && <span className="ml-2 font-medium">• En cours</span>}
                       </span>
                     </div>
-                    <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                    {!isBreak && <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />}
                   </div>
                 )
               })}

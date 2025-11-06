@@ -767,8 +767,8 @@ async def start_workout_generation(request: GenerateWorkoutVideoRequest):
 @router.get("/workout-exercises/{workout_id}")
 async def get_workout_exercises(workout_id: str):
     """
-    Récupère la liste des exercices d'un workout généré.
-    Utilisé par le frontend pour afficher la liste des exercices.
+    Récupère la liste des exercices d'un workout généré, incluant les périodes de break.
+    Utilisé par le frontend pour afficher la liste des exercices avec alternance work/rest.
     """
     logger.info(f"Récupération des exercices pour workout {workout_id}")
 
@@ -778,34 +778,23 @@ async def get_workout_exercises(workout_id: str):
         logger.error(f"Workout {workout_id} non trouvé")
         raise HTTPException(404, "Workout not found")
 
-    # Extraire les exercices
+    # Extraire les exercices et la config
     exercises = workout_data.get("exercises", [])
+    config = workout_data.get("config")
 
-    # Convertir les exercices en format frontend
-    workout_exercises = []
-    for i, exercise in enumerate(exercises):
-        workout_exercises.append(
-            {
-                "name": exercise.name,
-                "description": exercise.description or f"Exercice {exercise.name}",
-                "icon": getattr(
-                    exercise, "icon", "🏋️"
-                ),  # Utiliser l'icône de l'exercice
-                "duration": getattr(
-                    exercise, "default_duration", 60
-                ),  # Utiliser la durée par défaut
-                "order": i + 1,
-            }
-        )
+    # Générer la liste avec alternance exercices/breaks
+    from ..services.workout_generator import generate_workout_with_intervals
+
+    workout_items = generate_workout_with_intervals(exercises, config)
 
     logger.info(
-        f"Retour de {len(workout_exercises)} exercices pour workout {workout_id}"
+        f"Retour de {len(workout_items)} items (exercices + breaks) pour workout {workout_id}"
     )
 
     return {
         "workout_id": workout_id,
-        "exercises": workout_exercises,
-        "total_exercises": len(workout_exercises),
+        "exercises": workout_items,
+        "total_exercises": len(workout_items),
     }
 
 
