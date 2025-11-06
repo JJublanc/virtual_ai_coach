@@ -37,7 +37,7 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Dashboard et Profile */}
+        {/* Dashboard and Profile */}
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"

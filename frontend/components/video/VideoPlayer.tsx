@@ -70,7 +70,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       const time = videoRef.current.currentTime
       setCurrentTime(time)
 
-      // Calculer quel exercice est en cours et le temps restant
+      // Calculate which exercise is in progress and remaining time
       if (workoutExercises.length > 0) {
         let cumulativeTime = 0
         for (let i = 0; i < workoutExercises.length; i++) {
@@ -78,12 +78,12 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           const exerciseEndTime = cumulativeTime + exercise.duration
           if (time >= cumulativeTime && time < exerciseEndTime) {
             setCurrentExercise(exercise)
-            setCurrentExerciseIndex(i + 1) // Index commence à 1
-            // Notifier le parent du changement d'exercice
+            setCurrentExerciseIndex(i + 1) // Index starts at 1
+            // Notify parent of exercise change
             if (onExerciseChange) {
               onExerciseChange(i)
             }
-            // Calculer le temps restant pour cet exercice
+            // Calculate remaining time for this exercise
             const timeRemainingInExercise = exerciseEndTime - time
             setExerciseTimeRemaining(Math.ceil(timeRemainingInExercise))
             break
@@ -96,8 +96,8 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      // Utiliser la durée totale prévue du workout si disponible,
-      // sinon utiliser la durée de la vidéo HTML5
+      // Use the total expected workout duration if available,
+      // otherwise use the HTML5 video duration
       const totalWorkoutDuration = workoutInfo?.totalDuration || 0
       if (totalWorkoutDuration > 0) {
         setDuration(totalWorkoutDuration)
@@ -107,7 +107,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     }
   }
 
-  // Mettre à jour la durée quand workoutInfo change
+  // Update duration when workoutInfo changes
   useEffect(() => {
     if (workoutInfo?.totalDuration) {
       setDuration(workoutInfo.totalDuration)
@@ -123,7 +123,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
   return (
     <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
-      {/* Vidéo réelle ou placeholder */}
+      {/* Actual video or placeholder */}
       {videoUrl ? (
         <video
           ref={videoRef}
@@ -134,18 +134,18 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           onPause={() => setIsPlaying(false)}
         >
           <source src={videoUrl} type="video/mp4" />
-          Votre navigateur ne supporte pas la lecture vidéo.
+          Your browser does not support video playback.
         </video>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
       )}
 
-      {/* État de génération */}
+      {/* Generation state */}
       {isGenerating && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-900" />
-            <p className="text-gray-900 font-medium mb-2">Génération de la vidéo...</p>
+            <p className="text-gray-900 font-medium mb-2">Generating video...</p>
             <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-green-500 rounded-full transition-all duration-300"
@@ -157,20 +157,20 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
         </div>
       )}
 
-      {/* Erreur */}
+      {/* Error */}
       {error && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center max-w-md">
-            <p className="text-red-800 font-medium mb-2">Erreur de génération</p>
+            <p className="text-red-800 font-medium mb-2">Generation error</p>
             <p className="text-red-600 text-sm">{error}</p>
           </div>
         </div>
       )}
 
-      {/* Contrôles vidéo - seulement si vidéo disponible */}
+      {/* Video controls - only if video available */}
       {videoUrl && !isGenerating && !error && (
         <>
-          {/* Overlay BREAK pendant les périodes de repos */}
+          {/* BREAK overlay during rest periods */}
           {currentExercise?.is_break && (
             <div
               className="absolute inset-0 z-10"
@@ -180,10 +180,10 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                 backgroundPosition: 'center',
               }}
             >
-              {/* Overlay semi-transparent pour assurer la lisibilité */}
+              {/* Semi-transparent overlay for readability */}
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-              {/* Contenu centré */}
+              {/* Centered content */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <h1 className="text-9xl font-bold text-white mb-8 tracking-wider drop-shadow-2xl">
@@ -193,20 +193,20 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                     {Math.floor(exerciseTimeRemaining / 60)}:{(exerciseTimeRemaining % 60).toString().padStart(2, '0')}
                   </div>
                   <p className="text-3xl text-white/90 mt-6 drop-shadow-lg">
-                    Récupération en cours...
+                    Recovery in progress...
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Exercise description overlay - top left - masqué pendant les breaks */}
+          {/* Exercise description overlay - top left - hidden during breaks */}
           {!currentExercise?.is_break && (
             <div className="absolute top-4 left-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 w-80 transition-all duration-300">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="text-2xl flex-shrink-0">{currentExercise?.icon || "🏋️"}</span>
-                <h3 className="font-bold text-lg truncate">{currentExercise?.name || "Entraînement"}</h3>
+                <h3 className="font-bold text-lg truncate">{currentExercise?.name || "Training"}</h3>
               </div>
               <button
                 onClick={() => setIsExerciseDescriptionExpanded(!isExerciseDescriptionExpanded)}
@@ -220,14 +220,14 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             {isExerciseDescriptionExpanded && (
               <div className="overflow-hidden transition-all duration-300">
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  {currentExercise?.description || "Votre vidéo d'entraînement personnalisée est prête. Suivez les exercices et donnez le meilleur de vous-même !"}
+                  {currentExercise?.description || "Your personalized training video is ready. Follow the exercises and give it your best!"}
                 </p>
               </div>
             )}
             </div>
           )}
 
-          {/* Timer circle - top right - couleur dynamique selon break ou exercice */}
+          {/* Timer circle - top right - dynamic color based on break or exercise */}
           <div className="absolute top-4 right-4">
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -239,7 +239,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                   strokeWidth="8"
                   fill="none"
                 />
-                {/* Cercle de progression - couleur dynamique */}
+                {/* Progress circle - dynamic color */}
                 <circle
                   cx="48"
                   cy="48"
@@ -259,7 +259,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               </div>
             </div>
 
-            {/* Indicateur exercice actuel - sous le timer */}
+            {/* Current exercise indicator - below timer */}
             <div className="mt-2 text-center">
               <span className="text-white text-sm font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
                 {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.length}` : '1 / -'}
@@ -270,14 +270,14 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           {/* Progress bar - bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex items-center justify-between mb-2">
-              {/* Temps écoulé à gauche */}
+              {/* Elapsed time on the left */}
               <span className="text-white text-sm font-medium">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
 
-              {/* Contrôles de lecture - alignés au centre */}
+              {/* Playback controls - centered */}
               <div className="flex items-center gap-2">
-                {/* Bouton play/pause */}
+                {/* Play/pause button */}
                 <button
                   onClick={togglePlay}
                   className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 hover:bg-white/30 transition-colors"
@@ -290,7 +290,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                 </button>
               </div>
 
-              {/* Bouton plein écran à droite */}
+              {/* Fullscreen button on the right */}
               <button className="text-white hover:text-gray-300 transition-colors">
                 <Maximize2 className="w-5 h-5" />
               </button>
@@ -298,7 +298,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             <div
               className="h-2 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:h-3 transition-all"
               onClick={handleProgressClick}
-              title="Cliquez pour naviguer dans la vidéo"
+              title="Click to navigate in the video"
             >
               <div
                 className="h-full bg-green-400 rounded-full transition-all duration-300"
@@ -309,13 +309,13 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
         </>
       )}
 
-      {/* État par défaut - pas de vidéo */}
+      {/* Default state - no video */}
       {!videoUrl && !isGenerating && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white">
             <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">Prêt à commencer ?</p>
-            <p className="text-sm opacity-75">Configurez votre entraînement et cliquez sur "Generate training"</p>
+            <p className="text-lg font-medium mb-2">Ready to start?</p>
+            <p className="text-sm opacity-75">Configure your training and click "Generate training"</p>
           </div>
         </div>
       )}
