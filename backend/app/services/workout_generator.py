@@ -123,26 +123,28 @@ def generate_random_exercises(
     exercises_pool: List[Exercise], count: int
 ) -> List[Exercise]:
     """
-    Tire aléatoirement avec remise des exercices depuis un pool.
+    Tire aléatoirement des exercices depuis un pool en évitant que le même exercice
+    apparaisse parmi les 2 exercices précédents.
 
     Args:
         exercises_pool: Pool d'exercices éligibles
         count: Nombre d'exercices à tirer
 
     Returns:
-        List[Exercise]: Exercices sélectionnés (peut contenir des doublons)
+        List[Exercise]: Exercices sélectionnés (peut contenir des doublons non consécutifs)
 
     Note:
-        Utilise random.choices() pour un tirage avec remise, permettant
-        la répétition d'exercices. Ceci est important lorsque le pool
-        d'exercices disponibles est plus petit que le nombre demandé.
+        Évite qu'un exercice soit identique à l'un des 2 exercices précédents.
+        Si le pool contient moins de 3 exercices, cette contrainte peut être
+        partiellement respectée selon le nombre d'exercices disponibles.
 
     Example:
-        >>> pool = [ex1, ex2, ex3]
-        >>> selected = generate_random_exercises(pool, count=5)
-        >>> len(selected)
-        5
-        >>> # Peut contenir des doublons car tirage avec remise
+        >>> pool = [ex1, ex2, ex3, ex4]
+        >>> selected = generate_random_exercises(pool, count=10)
+        >>> # Vérifier qu'aucun exercice n'est identique aux 2 précédents
+        >>> for i in range(2, len(selected)):
+        ...     assert selected[i].id != selected[i-1].id
+        ...     assert selected[i].id != selected[i-2].id
     """
     if count <= 0:
         return []
@@ -150,8 +152,46 @@ def generate_random_exercises(
     if not exercises_pool:
         raise ValueError("Le pool d'exercices est vide")
 
-    # Tirage aléatoire avec remise (permet les doublons)
-    return random.choices(exercises_pool, k=count)
+    # Si moins de 3 exercices dans le pool, on ne peut pas garantir la contrainte
+    # mais on fait de notre mieux
+    if len(exercises_pool) < 3:
+        # Pour 1 ou 2 exercices, on alterne simplement
+        if len(exercises_pool) == 1:
+            return exercises_pool * count
+        else:  # 2 exercices
+            result = []
+            for i in range(count):
+                result.append(exercises_pool[i % 2])
+            return result
+
+    selected_exercises = []
+
+    for i in range(count):
+        if i < 2:
+            # Pour les 2 premiers exercices : tirage aléatoire simple
+            # mais on évite quand même le précédent si i == 1
+            if i == 0:
+                exercise = random.choice(exercises_pool)
+            else:  # i == 1
+                previous = selected_exercises[0]
+                available_pool = [ex for ex in exercises_pool if ex.id != previous.id]
+                exercise = random.choice(available_pool)
+        else:
+            # Pour les exercices suivants : éviter les 2 précédents
+            prev_1 = selected_exercises[-1]
+            prev_2 = selected_exercises[-2]
+
+            # Créer un pool sans les 2 exercices précédents
+            available_pool = [
+                ex for ex in exercises_pool if ex.id != prev_1.id and ex.id != prev_2.id
+            ]
+
+            # Tirer un exercice du pool filtré
+            exercise = random.choice(available_pool)
+
+        selected_exercises.append(exercise)
+
+    return selected_exercises
 
 
 def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
