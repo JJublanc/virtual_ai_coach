@@ -51,8 +51,8 @@ const initialConfig: WorkoutConfig = {
   no_repeat: false,
   no_jump: false,
   intensity_levels: ['easy', 'medium', 'hard'],
-  include_warm_up: true,
-  include_cool_down: true,
+  include_warm_up: false,
+  include_cool_down: false,
 }
 
 export const useTrainingStore = create<TrainingStore>()(
