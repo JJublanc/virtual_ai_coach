@@ -1,7 +1,7 @@
 // components/video/VideoPlayer.tsx
 'use client'
 
-import { Play, Pause, Maximize2, Loader2 } from 'lucide-react'
+import { Play, Pause, Maximize2, Minimize2, Loader2 } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 import { getExerciseIcon, getIconColorClasses } from '@/lib/exerciseIcons'
 
@@ -30,6 +30,7 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, error, workoutExercises = [], workoutInfo, onExerciseChange }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -38,6 +39,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(1)
   const [isExerciseDescriptionExpanded, setIsExerciseDescriptionExpanded] = useState(true)
   const [lastBeepSecond, setLastBeepSecond] = useState<number | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -93,6 +95,32 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       setIsPlaying(!isPlaying)
     }
   }
+
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return
+
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen()
+        setIsFullscreen(true)
+      } else {
+        await document.exitFullscreen()
+        setIsFullscreen(false)
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error)
+    }
+  }
+
+  // Listen for fullscreen changes (user can exit with ESC)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
 
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -162,7 +190,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
   return (
-    <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
+    <div ref={containerRef} className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
       {/* Actual video or placeholder */}
       {videoUrl ? (
         <video
@@ -222,6 +250,29 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             >
               {/* Semi-transparent overlay for readability */}
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+              {/* Next exercise indicator - top left */}
+              {(() => {
+                const nextExercise = workoutExercises[currentExerciseIndex]
+                if (nextExercise && !nextExercise.is_break) {
+                  const NextIconComponent = getExerciseIcon(nextExercise.name)
+                  return (
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-sm shadow-2xl">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Next up</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <NextIconComponent className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg text-gray-900 truncate">{nextExercise.name}</h3>
+                          <p className="text-sm text-gray-600">{nextExercise.duration}s</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              })()}
 
               {/* Centered content */}
               <div className="absolute inset-0 flex items-center justify-center">
@@ -334,8 +385,16 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               </div>
 
               {/* Fullscreen button on the right */}
-              <button className="text-white hover:text-gray-300 transition-colors">
-                <Maximize2 className="w-5 h-5" />
+              <button
+                onClick={toggleFullscreen}
+                className="text-white hover:text-gray-300 transition-colors"
+                title={isFullscreen ? "Exit fullscreen (ESC)" : "Enter fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-5 h-5" />
+                ) : (
+                  <Maximize2 className="w-5 h-5" />
+                )}
               </button>
             </div>
             <div
