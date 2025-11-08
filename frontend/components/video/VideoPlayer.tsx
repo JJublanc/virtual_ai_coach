@@ -37,12 +37,51 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [exerciseTimeRemaining, setExerciseTimeRemaining] = useState(0)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(1)
   const [isExerciseDescriptionExpanded, setIsExerciseDescriptionExpanded] = useState(true)
+  const [lastBeepSecond, setLastBeepSecond] = useState<number | null>(null)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
       videoRef.current.load()
     }
   }, [videoUrl])
+
+  // Function to play beep sound using Web Audio API
+  const playBeep = (frequency: number = 800, duration: number = 350) => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.value = frequency
+      oscillator.type = 'sine'
+
+      gainNode.gain.setValueAtTime(0.9, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + duration / 1000)
+    } catch (error) {
+      console.error('Error playing beep:', error)
+    }
+  }
+
+  // Effect to handle countdown beeps for last 5 seconds
+  useEffect(() => {
+    // Only beep for exercises, not breaks
+    if (currentExercise && !currentExercise.is_break && exerciseTimeRemaining > 0 && exerciseTimeRemaining <= 5) {
+      // Check if we haven't beeped for this second yet
+      if (lastBeepSecond !== exerciseTimeRemaining) {
+        playBeep()
+        setLastBeepSecond(exerciseTimeRemaining)
+      }
+    } else if (exerciseTimeRemaining > 5) {
+      // Reset the beep tracker when we're not in countdown range
+      setLastBeepSecond(null)
+    }
+  }, [exerciseTimeRemaining, currentExercise, lastBeepSecond])
 
   const togglePlay = () => {
     if (videoRef.current) {
