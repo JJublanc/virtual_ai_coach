@@ -82,3 +82,29 @@ export interface VideoPlayerState {
   current_round: number
   progress_percentage: number
 }
+
+// Early Access Types
+export interface SignupData {
+  email: string
+  firstName: string
+  lastName: string
+  featureInterest: string
+  comment?: string
+}
+
+export interface EarlyAccessSignup extends SignupData {
+  id: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type FeatureName =
+  | 'Dashboard'
+  | 'Profile'
+  | 'Goals'
+  | 'Plan'
+  | 'Advanced Intervals'
+  | 'Custom Intensity'
+  | 'Advanced Warmup'
+  | 'AI Assistant'
+  | 'Select Exercises'

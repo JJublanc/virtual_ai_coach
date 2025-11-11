@@ -1,0 +1,34 @@
+{
+  "name": "virtual-ai-coach-backend",
+  "version": "1.0.0",
+  "description": "Backend et migrations pour Virtual AI Coach",
+  "main": "index.js",
+  "scripts": {
+    "migrate:local": "node scripts/migrate.js local",
+    "migrate:staging": "node scripts/migrate.js staging",
+    "migrate:prod": "node scripts/migrate.js production",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase status",
+    "migration:new": "supabase migration new",
+    "migration:up": "supabase db push",
+    "migration:diff": "supabase db diff --use-migra -f",
+    "seed": "supabase db seed",
+    "link:staging": "supabase link --project-ref $SUPABASE_STAGING_PROJECT_ID",
+    "link:prod": "supabase link --project-ref $SUPABASE_PROD_PROJECT_ID"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "supabase": "^1.123.4"
+  },
+  "keywords": [
+    "supabase",
+    "migrations",
+    "database"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

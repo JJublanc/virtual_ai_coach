@@ -4,9 +4,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dumbbell, LayoutDashboard, User } from 'lucide-react'
+import { useComingSoon } from '@/providers/ComingSoonProvider'
 
 export function Header() {
   const pathname = usePathname()
+  const { openModal } = useComingSoon()
 
   const navItems = [
     { name: 'Goals', href: '/goals' },
@@ -39,19 +41,25 @@ export function Header() {
 
         {/* Dashboard and Profile */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              openModal('Dashboard')
+            }}
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
           >
             <LayoutDashboard className="h-4 w-4" />
             <span className="text-sm font-medium">Dashboard</span>
-          </Link>
-          <Link
-            href="/profile"
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              openModal('Profile')
+            }}
             className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
           >
             <User className="h-5 w-5 text-gray-700" />
-          </Link>
+          </button>
         </div>
       </div>
     </header>

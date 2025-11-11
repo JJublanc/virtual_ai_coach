@@ -5,9 +5,11 @@ import { Settings, Ban, ArrowUp } from 'lucide-react'
 import { useTrainingStore } from '@/store/trainingStore'
 import { IntensityCheckboxes } from './IntensityCheckboxes'
 import { WarmupOptions } from './WarmupOptions'
+import { useComingSoon } from '@/providers/ComingSoonProvider'
 
 export function ParameterizedSetup() {
   const { config, setIntervals, toggleNoRepeat, toggleNoJump } = useTrainingStore()
+  const { openModal } = useComingSoon()
 
   const handleWorkTimeChange = (value: number) => {
     const restTime = 60 - value
@@ -16,25 +18,35 @@ export function ParameterizedSetup() {
 
   return (
     <div className="space-y-4">
-      {/* Intervals */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600">intervals</span>
-          <span className="text-sm font-medium">{config.intervals.work_time}s/{config.intervals.rest_time}s</span>
+      {/* Intervals - Coming Soon Wrapper */}
+      <div className="relative">
+        <div className="pointer-events-none opacity-50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">intervals</span>
+            <span className="text-sm font-medium">{config.intervals.work_time}s/{config.intervals.rest_time}s</span>
+          </div>
+          <div className="relative">
+            <input
+              type="range"
+              min="10"
+              max="60"
+              value={config.intervals.work_time}
+              disabled
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            activity time / rest time for each exercise
+          </p>
         </div>
-        <div className="relative">
-          <input
-            type="range"
-            min="10"
-            max="60"
-            value={config.intervals.work_time}
-            onChange={(e) => handleWorkTimeChange(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
+        <div
+          onClick={() => openModal('Advanced Intervals')}
+          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
+        >
+          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
+            Personnalisation avancée bientôt disponible
+          </span>
         </div>
-        <p className="text-xs text-gray-500 mt-1">
-          activity time / rest time for each exercise
-        </p>
       </div>
 
       {/* Toggles */}
@@ -82,11 +94,35 @@ export function ParameterizedSetup() {
         </label>
       </div>
 
-      {/* Intensity Checkboxes */}
-      <IntensityCheckboxes />
+      {/* Intensity Checkboxes - Coming Soon Wrapper */}
+      <div className="relative">
+        <div className="pointer-events-none opacity-50">
+          <IntensityCheckboxes />
+        </div>
+        <div
+          onClick={() => openModal('Custom Intensity')}
+          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
+        >
+          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
+            Personnalisation bientôt disponible
+          </span>
+        </div>
+      </div>
 
-      {/* Warmup Options */}
-      <WarmupOptions />
+      {/* Warmup Options - Coming Soon Wrapper */}
+      <div className="relative">
+        <div className="pointer-events-none opacity-50">
+          <WarmupOptions />
+        </div>
+        <div
+          onClick={() => openModal('Advanced Warmup')}
+          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
+        >
+          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
+            Personnalisation bientôt disponible
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
