@@ -28,3 +28,9 @@ backend/*.mp4
 exercices_generation/tools/
 videos/
 workout.mp4
+
+.env
+backend/.env
+
+backend/.vscode/
+backend/node_modules/

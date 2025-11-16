@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import List, Dict, Optional
 import tempfile
 import os
+import hashlib
+import requests
 
 from ..models.exercise import Exercise
 from ..models.config import WorkoutConfig
@@ -29,12 +31,19 @@ class VideoService:
         Intensity.HIGH_INTENSITY: 1.2,  # 120% vitesse normale (plus rapide)
     }
 
-    def __init__(self, project_root: Path, base_video_path: Optional[Path] = None):
+    def __init__(
+        self,
+        project_root: Path,
+        base_video_path: Optional[Path] = None,
+        video_cache_dir: Optional[Path] = None,
+    ):
         """
         Initialise le service vidéo
 
         Args:
-            base_video_path: Chemin de base pour les vidéos (par défaut: exercices_generation/outputs/)
+            project_root: Racine du projet
+            base_video_path: Chemin de base pour les vidéos locales (par défaut: exercices_generation/outputs/)
+            video_cache_dir: Dossier de cache pour les vidéos Supabase (par défaut: /tmp/exercise_videos)
         """
         self.project_root = project_root
         if base_video_path is None:
@@ -43,8 +52,18 @@ class VideoService:
         else:
             self.base_video_path = project_root / base_video_path
 
+        # Cache pour les vidéos téléchargées depuis Supabase
+        if video_cache_dir is None:
+            self.video_cache_dir = Path("/tmp/exercise_videos")
+        else:
+            self.video_cache_dir = video_cache_dir
+
+        # Créer le dossier de cache s'il n'existe pas
+        self.video_cache_dir.mkdir(parents=True, exist_ok=True)
+
         logger.info(
-            f"VideoService initialisé avec project_root: {self.project_root}, base_path: {self.base_video_path}"
+            f"VideoService initialisé avec project_root: {self.project_root}, "
+            f"base_path: {self.base_video_path}, cache_dir: {self.video_cache_dir}"
         )
 
     def get_speed_multiplier(self, intensity: Intensity) -> float:
@@ -298,59 +317,120 @@ class VideoService:
             logger.error(f"Erreur lors de la construction de la commande FFmpeg: {e}")
             return []
 
+    def _download_video_from_supabase(
+        self, video_url: str, exercise_name: str
+    ) -> Optional[Path]:
+        """
+        Télécharge une vidéo depuis Supabase Storage et la met en cache localement
+
+        Args:
+            video_url: URL de la vidéo dans Supabase Storage
+            exercise_name: Nom de l'exercice (pour le nom du fichier)
+
+        Returns:
+            Optional[Path]: Chemin local de la vidéo en cache ou None si erreur
+        """
+        try:
+            # Créer un hash de l'URL pour un nom de fichier unique
+            url_hash = hashlib.md5(video_url.encode()).hexdigest()[:8]
+
+            # Extraire l'extension du fichier depuis l'URL
+            ext = Path(video_url).suffix or ".mov"
+
+            # Nettoyer le nom de l'exercice pour le système de fichiers
+            safe_name = "".join(
+                c for c in exercise_name if c.isalnum() or c in (" ", "-", "_")
+            ).strip()
+            safe_name = safe_name.replace(" ", "_").lower()
+
+            # Chemin du fichier en cache
+            cache_file = self.video_cache_dir / f"{url_hash}_{safe_name}{ext}"
+
+            # Si déjà en cache, retourner directement
+            if cache_file.exists():
+                logger.debug(f"Vidéo en cache: {cache_file}")
+                return cache_file
+
+            # Télécharger la vidéo
+            logger.info(f"Téléchargement vidéo depuis Supabase: {video_url}")
+
+            response = requests.get(video_url, stream=True, timeout=60)
+            response.raise_for_status()
+
+            # Sauvegarder dans le cache
+            with open(cache_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            file_size_mb = cache_file.stat().st_size / (1024 * 1024)
+            logger.info(
+                f"Vidéo téléchargée et mise en cache: {cache_file} ({file_size_mb:.2f} MB)"
+            )
+
+            return cache_file
+
+        except requests.RequestException as e:
+            logger.error(f"Erreur de téléchargement depuis Supabase: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Erreur inattendue lors du téléchargement: {e}")
+            return None
+
     def _resolve_video_path(self, exercise: Exercise) -> Optional[Path]:
         """
         Résout le chemin de la vidéo d'un exercice
+        Gère à la fois les URLs Supabase Storage et les chemins locaux
 
         Args:
             exercise: Exercice pour lequel résoudre le chemin
 
         Returns:
             Optional[Path]: Chemin vers la vidéo ou None si non trouvé
-
-        Note:
-            Pour l'instant, utilise des chemins locaux.
-            TODO: Adapter pour gérer les URLs Supabase Storage
         """
         logger.debug(f"Résolution du chemin pour {exercise.name}")
         logger.debug(f"  video_url: {exercise.video_url}")
-        logger.debug(f"  project_root: {self.project_root}")
 
-        # Si video_url est défini et est un chemin local, l'utiliser directement
-        if exercise.video_url:
-            video_path = Path(exercise.video_url)
-            logger.debug(f"  video_path initial: {video_path}")
-            logger.debug(f"  is_absolute: {video_path.is_absolute()}")
+        # Si c'est une URL Supabase (commence par http), télécharger et cacher
+        if exercise.is_supabase_url():
+            logger.debug("  URL Supabase détectée, téléchargement...")
+            return self._download_video_from_supabase(exercise.video_url, exercise.name)
 
-            # Vérifier si c'est un chemin absolu ou relatif
-            if video_path.is_absolute():
-                logger.debug(
-                    f"  Chemin absolu, vérification existence: {video_path.exists()}"
-                )
-                if video_path.exists():
-                    logger.debug(f"  Chemin absolu trouvé: {video_path}")
-                    return video_path
-            else:
-                # Chemin relatif, essayer plusieurs options
-                # 1. Relatif au répertoire racine du projet
-                full_path = self.project_root / video_path
-                logger.debug(
-                    f"  Test chemin racine: {full_path}, existe: {full_path.exists()}"
-                )
-                if full_path.exists():
-                    logger.debug(f"  Chemin racine trouvé: {full_path}")
-                    return full_path
+        # Sinon, traiter comme un chemin local
+        logger.debug(f"  Chemin local, project_root: {self.project_root}")
 
-                # 2. Relatif au base_video_path (pour les vidéos générées si besoin)
-                full_path = self.base_video_path / video_path
-                logger.debug(
-                    f"  Test chemin base: {full_path}, existe: {full_path.exists()}"
-                )
-                if full_path.exists():
-                    logger.debug(f"  Chemin base trouvé: {full_path}")
-                    return full_path
+        video_path = Path(exercise.video_url)
+        logger.debug(f"  video_path initial: {video_path}")
+        logger.debug(f"  is_absolute: {video_path.is_absolute()}")
 
-        # Fallback: essayer de deviner le chemin basé sur le nom
+        # Vérifier si c'est un chemin absolu ou relatif
+        if video_path.is_absolute():
+            logger.debug(
+                f"  Chemin absolu, vérification existence: {video_path.exists()}"
+            )
+            if video_path.exists():
+                logger.debug(f"  Chemin absolu trouvé: {video_path}")
+                return video_path
+        else:
+            # Chemin relatif, essayer plusieurs options
+            # 1. Relatif au répertoire racine du projet
+            full_path = self.project_root / video_path
+            logger.debug(
+                f"  Test chemin racine: {full_path}, existe: {full_path.exists()}"
+            )
+            if full_path.exists():
+                logger.debug(f"  Chemin racine trouvé: {full_path}")
+                return full_path
+
+            # 2. Relatif au base_video_path (pour les vidéos générées si besoin)
+            full_path = self.base_video_path / video_path
+            logger.debug(
+                f"  Test chemin base: {full_path}, existe: {full_path.exists()}"
+            )
+            if full_path.exists():
+                logger.debug(f"  Chemin base trouvé: {full_path}")
+                return full_path
+
+        # Fallback
         logger.warning(
             f"Impossible de résoudre le chemin vidéo pour {exercise.name}, video_url: {exercise.video_url}"
         )

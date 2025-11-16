@@ -1,22 +1,46 @@
 """API endpoints pour la gestion des exercices."""
 
 import json
+import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
+from supabase import create_client, Client
 
 from ..models.exercise import Exercise
 
 router = APIRouter(prefix="/api", tags=["exercises"])
 
-# Chemin vers le fichier JSON des exercices
+# Configuration Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
+# Flag pour basculer entre JSON local et Supabase
+USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+
+# Chemin vers le fichier JSON des exercices (fallback)
 EXERCISES_FILE = Path(__file__).parent.parent / "models" / "exercises.json"
 
 
-def load_exercises() -> List[Exercise]:
+@lru_cache()
+def get_supabase_client() -> Optional[Client]:
     """
-    Charge les exercices depuis le fichier JSON.
+    Crée et retourne un client Supabase en cache
+
+    Returns:
+        Client Supabase ou None si non configuré
+    """
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        return None
+
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+
+def load_exercises_from_json() -> List[Exercise]:
+    """
+    Charge les exercices depuis le fichier JSON local.
 
     Returns:
         List[Exercise]: Liste des exercices validés par Pydantic
@@ -45,6 +69,55 @@ def load_exercises() -> List[Exercise]:
         raise HTTPException(
             status_code=500, detail=f"Erreur lors du chargement des exercices: {str(e)}"
         )
+
+
+def load_exercises_from_supabase() -> List[Exercise]:
+    """
+    Charge les exercices depuis Supabase PostgreSQL.
+
+    Returns:
+        List[Exercise]: Liste des exercices
+
+    Raises:
+        HTTPException: Si erreur de connexion ou de récupération
+    """
+    try:
+        supabase = get_supabase_client()
+
+        if not supabase:
+            raise HTTPException(
+                status_code=500,
+                detail="Supabase non configuré (SUPABASE_URL ou SUPABASE_ANON_KEY manquant)",
+            )
+
+        # Récupérer tous les exercices
+        response = supabase.table("exercises").select("*").execute()
+
+        if not response.data:
+            return []
+
+        # Mapper vers le modèle Exercise
+        exercises = [Exercise.from_supabase(ex) for ex in response.data]
+        return exercises
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors du chargement depuis Supabase: {str(e)}",
+        )
+
+
+def load_exercises() -> List[Exercise]:
+    """
+    Charge les exercices depuis Supabase ou JSON selon la configuration.
+
+    Returns:
+        List[Exercise]: Liste des exercices
+    """
+    if USE_SUPABASE:
+        return load_exercises_from_supabase()
+    else:
+        return load_exercises_from_json()
 
 
 @router.get("/exercises", response_model=List[Exercise])
