@@ -89,10 +89,10 @@ erDiagram
     %% Relations
     exercises ||--o{ exercise_categories : "belongs to"
     categories ||--o{ exercise_categories : "contains"
-    
+
     workouts ||--o{ workout_exercises : "contains"
     exercises ||--o{ workout_exercises : "used in"
-    
+
     user_profiles ||--o{ workouts : "creates"
     user_profiles ||--o{ workout_sessions : "performs"
     workouts ||--o{ workout_sessions : "tracked by"
@@ -112,10 +112,10 @@ CREATE TABLE exercises (
     default_duration INTEGER NOT NULL,             -- 30 secondes
     difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
     has_jump BOOLEAN DEFAULT false,                -- Pour filtre "no jump"
-    
+
     -- 🆕 GESTION FREEMIUM
     access_tier VARCHAR(20) DEFAULT 'free' CHECK (access_tier IN ('free', 'premium')),
-    
+
     metadata JSONB,                                -- Voir exemple ci-dessous
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
@@ -162,11 +162,11 @@ CREATE TABLE workouts (
     ai_prompt TEXT,                                -- "Je veux une séance cardio intense"
     status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'ready', 'in_progress', 'completed')),
     video_url TEXT,                                -- URL si pré-rendu
-    
+
     -- 🆕 GESTION SESSIONS ANONYMES
     session_token VARCHAR(255),                    -- Token pour retrouver séances anonymes
     expires_at TIMESTAMPTZ,                        -- Expiration session anonyme (24h)
-    
+
     created_at TIMESTAMPTZ DEFAULT now(),
     completed_at TIMESTAMPTZ
 );
@@ -214,7 +214,7 @@ CREATE TABLE user_profiles (
     fitness_level VARCHAR(20) CHECK (fitness_level IN ('beginner', 'intermediate', 'advanced')),
     preferences JSONB,                             -- Voir exemple ci-dessous
     goals TEXT[],                                  -- {"lose_weight", "build_muscle"}
-    
+
     -- 🆕 GESTION ABONNEMENTS STRIPE
     subscription_status VARCHAR(20) DEFAULT 'free' CHECK (subscription_status IN ('free', 'active', 'canceled', 'past_due', 'incomplete')),
     subscription_type VARCHAR(50),                 -- 'basic', 'premium', 'pro'
@@ -223,7 +223,7 @@ CREATE TABLE user_profiles (
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
     canceled_at TIMESTAMPTZ,
-    
+
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -297,7 +297,7 @@ CREATE INDEX idx_user_profiles_subscription_status ON user_profiles(subscription
 
 ### Exercices de base (Freemium)
 ```sql
-INSERT INTO categories (name, description) VALUES 
+INSERT INTO categories (name, description) VALUES
 ('cardio', 'Exercices cardiovasculaires'),
 ('strength', 'Renforcement musculaire'),
 ('flexibility', 'Étirements et mobilité');
@@ -399,12 +399,12 @@ INSERT INTO workouts (name, config, total_duration, ai_generated, session_token,
 
 -- Ajouter exercices gratuits seulement
 INSERT INTO workout_exercises (workout_id, exercise_id, order_index, custom_duration)
-SELECT 
+SELECT
     (SELECT id FROM workouts WHERE session_token = 'anon_token_abc123xyz'),
     e.id,
     ROW_NUMBER() OVER() - 1,
     e.default_duration
-FROM exercises e 
+FROM exercises e
 WHERE e.access_tier = 'free' AND e.name IN ('Push-ups', 'Air Squat', 'Plank')
 ORDER BY e.name;
 ```
@@ -433,7 +433,7 @@ ORDER BY e.name;
 
 ### 2. Récupérer séance complète avec nombre d'exercices
 ```sql
-SELECT 
+SELECT
     w.*,
     COUNT(we.exercise_id) as exercise_count,       -- Calculé dynamiquement (plus de champ rounds)
     json_agg(
@@ -452,7 +452,7 @@ GROUP BY w.id;
 
 ### 3. Récupérer séance anonyme avec token
 ```sql
-SELECT 
+SELECT
     w.*,
     COUNT(we.exercise_id) as exercise_count,
     json_agg(
@@ -472,9 +472,9 @@ GROUP BY w.id;
 ### 4. Vérification accès exercice selon abonnement
 ```sql
 -- Vérifier si utilisateur peut utiliser un exercice
-SELECT 
+SELECT
     e.access_tier,
-    CASE 
+    CASE
         WHEN e.access_tier = 'free' THEN true
         WHEN u.subscription_status = 'active' THEN true
         ELSE false
@@ -487,8 +487,8 @@ WHERE e.id = $1;  -- exercise_id
 ### 5. Nettoyage sessions expirées
 ```sql
 -- Supprimer séances anonymes expirées (tâche cron)
-DELETE FROM workouts 
-WHERE user_id IS NULL 
+DELETE FROM workouts
+WHERE user_id IS NULL
   AND expires_at < NOW();
 ```
 
@@ -496,7 +496,7 @@ WHERE user_id IS NULL
 
 ### Phase 1 (MVP) - Mode Freemium
 - ✅ exercises avec access_tier (free/premium)
-- ✅ categories, exercise_categories  
+- ✅ categories, exercise_categories
 - ✅ workouts avec session_token pour anonymes
 - ✅ workout_exercises
 - ❌ Pas d'auth utilisateur obligatoire
@@ -528,7 +528,7 @@ expires_at = datetime.now() + timedelta(hours=24)
 ### Migration vers compte premium
 ```sql
 -- Récupérer séances anonymes d'un utilisateur qui s'inscrit
-UPDATE workouts 
+UPDATE workouts
 SET user_id = $1, session_token = NULL, expires_at = NULL
 WHERE session_token = $2 AND expires_at > NOW();
 ```

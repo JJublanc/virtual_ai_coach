@@ -114,13 +114,13 @@ def build_ffmpeg_command(
     - Découper selon durée souhaitée
     - Ajouter overlays (timer, barre progression, texte)
     """
-    
+
 def add_timer_overlay(stream: ffmpeg.Stream, position: str) -> ffmpeg.Stream:
     """Ajoute un timer sur la vidéo"""
-    
+
 def add_progress_bar(stream: ffmpeg.Stream, total_duration: float) -> ffmpeg.Stream:
     """Ajoute une barre de progression"""
-    
+
 def add_exercise_info(stream: ffmpeg.Stream, exercise: Exercise) -> ffmpeg.Stream:
     """Ajoute nom et description de l'exercice"""
 
@@ -138,11 +138,11 @@ async def generate_workout_video(request: WorkoutRequest):
     Input: Liste d'exercices + intensité
     Output: StreamingResponse (video/mp4)
     """
-    
+
 @app.get("/api/exercises")
 async def list_exercises():
     """Liste tous les exercices disponibles"""
-    
+
 @app.get("/api/exercises/{exercise_id}")
 async def get_exercise(exercise_id: str):
     """Détails d'un exercice spécifique"""

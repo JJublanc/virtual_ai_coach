@@ -1,0 +1,8 @@
+# Rapports de benchmark - garder seulement les plus récents
+*.json
+
+# Garder le README
+!README.md
+
+# Garder les rapports de baseline importants (à commiter manuellement si nécessaire)
+!baseline_*.json

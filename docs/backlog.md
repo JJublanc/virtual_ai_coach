@@ -17,7 +17,7 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - [x] Installer FFmpeg (brew/apt/chocolatey)
 - [x] Configurer VSCode avec extensions (Python, ESLint, Prettier)
 - [x] Installer uv et créer un .venv
-- [ ] Installer PostgreSQL local (ou via Docker)
+- [x] Installer PostgreSQL local (ou via Docker)
 
 
 **Critères d'acceptation :**
@@ -35,12 +35,12 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer la structure Git et configurer les branches
 
 **Tâches :**
-- [ ] Créer repository GitHub `virtual-ai-coach`
-- [ ] Configurer `.gitignore` (Python, Node, env files)
-- [ ] Créer branches : `main`, `develop`, `feat/*`
-- [ ] Configurer protection branche `main`
-- [ ] Ajouter README.md avec instructions setup
-- [ ] Installer et configurer les précommit
+- [x] Créer repository GitHub `virtual-ai-coach`
+- [x] Configurer `.gitignore` (Python, Node, env files)
+- [x] Créer branches : `main`, `dev`, `feat/*`
+- [x] Configurer protection branche `main`
+- [x] Ajouter README.md avec instructions setup
+- [x] Installer et configurer les précommit
 
 
 **Critères d'acceptation :**
@@ -58,15 +58,15 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer la structure backend Python avec FastAPI
 
 **Tâches :**
-- [ ] Créer dossier `backend/`
-- [ ] Initialiser virtual environment Python
-- [ ] Créer `requirements.txt` avec dépendances :
+- [x] Créer dossier `backend/`
+- [x] Initialiser virtual environment Python
+- [x] Ajouter les modules utiles à uv :
   - fastapi
   - uvicorn
   - ffmpeg-python
   - python-multipart
   - pydantic
-- [ ] Créer structure de dossiers :
+- [x] Créer structure de dossiers :
   ```
   backend/
   ├── app/
@@ -77,10 +77,9 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
   │   ├── api/
   │   └── config.py
   ├── tests/
-  └── requirements.txt
   ```
-- [ ] Créer `main.py` avec route `/health` de test
-- [ ] Lancer serveur : `uvicorn app.main:app --reload`
+- [x] Créer `main.py` avec route `/health` de test
+- [x] Lancer serveur : `uvicorn app.main:app --reload`
 
 **Critères d'acceptation :**
 - ✅ `http://localhost:8000/health` retourne 200 OK
@@ -94,15 +93,16 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Définir les modèles Pydantic pour les exercices et workouts
 
 **Tâches :**
-- [ ] Créer `models/exercise.py` avec modèle Exercise
-- [ ] Créer `models/workout.py` avec modèle WorkoutSession
-- [ ] Créer `models/config.py` avec WorkoutConfig
-- [ ] Ajouter validation Pydantic sur tous les champs
-- [ ] Créer fichier JSON mock avec 3-5 exercices de test
+- [x] Créer `models/exercise.py` avec modèle Exercise
+- [x] Créer `models/workout.py` avec modèle WorkoutSession
+- [x] Créer `models/config.py` avec WorkoutConfig
+- [x] Ajouter validation Pydantic sur tous les champs
+- [x] Créer fichier JSON mock avec 3-5 exercices de test
 
 **Critères d'acceptation :**
 - ✅ Modèles valident correctement les données
 - ✅ Fichier mock `exercises.json` chargeable
+- ✅ Les tests passent
 
 **Labels :** `backend`, `models`, `p1-high`
 
@@ -112,11 +112,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer endpoint pour lister les exercices disponibles
 
 **Tâches :**
-- [ ] Créer `api/exercises.py` avec router FastAPI
-- [ ] Implémenter GET `/api/exercises`
-- [ ] Charger données depuis `exercises.json`
-- [ ] Ajouter tests unitaires
-- [ ] Ajouter CORS middleware pour frontend
+- [x] Créer `api/exercises.py` avec router FastAPI
+- [x] Implémenter GET `/api/exercises`
+- [x] Charger données depuis `exercises.json`
+- [x] Ajouter tests unitaires
+- [x] Ajouter CORS middleware pour frontend
 
 **Critères d'acceptation :**
 - ✅ Endpoint retourne liste d'exercices en JSON
@@ -130,11 +130,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer le service de génération vidéo avec FFmpeg
 
 **Tâches :**
-- [ ] Créer `services/video_service.py`
-- [ ] Implémenter `build_ffmpeg_command()` pour concaténation
-- [ ] Implémenter `apply_speed_adjustment()` selon intensité
-- [ ] Tester avec 2 vidéos MOV du dossier `exercices_generation/outputs/`
-- [ ] Ajouter logs détaillés pour debugging
+- [x] Créer `services/video_service.py`
+- [x] Implémenter `build_ffmpeg_command()` pour concaténation
+- [x] Implémenter `apply_speed_adjustment()` selon intensité
+- [x] Tester avec 2 vidéos MOV du dossier `exercices_generation/outputs/`
+- [x] Ajouter logs détaillés pour debugging
 
 **Critères d'acceptation :**
 - ✅ Concaténation de 2 vidéos fonctionne
@@ -149,12 +149,12 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Créer endpoint de génération vidéo en streaming
 
 **Tâches :**
-- [ ] Créer route POST `/api/generate-workout-video`
-- [ ] Recevoir configuration workout en JSON
-- [ ] Appeler video_service pour générer vidéo
-- [ ] Streamer la sortie FFmpeg via StreamingResponse
-- [ ] Gérer les erreurs (timeout, fichiers manquants)
-- [ ] Tester avec Postman/curl
+- [x] Créer route POST `/api/generate-workout-video`
+- [x] Recevoir configuration workout en JSON
+- [x] Appeler video_service pour générer vidéo
+- [x] Streamer la sortie FFmpeg via StreamingResponse
+- [x] Gérer les erreurs (timeout, fichiers manquants)
+- [x] Tester avec Postman/curl
 
 **Critères d'acceptation :**
 - ✅ Endpoint retourne vidéo MP4 streamée
@@ -165,21 +165,21 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 
 ---
 
-### 🎯 PHASE 1 : MVP Local - Frontend
+### 🎯 PHASE 1 : MVP Local
 
 #### FRONT-001 : Initialiser projet Next.js
 **Description :** Créer l'application frontend avec Next.js 14+
 
 **Tâches :**
-- [ ] Créer projet : `npx create-next-app@latest frontend`
-- [ ] Choisir : TypeScript, App Router, Tailwind CSS
-- [ ] Installer dépendances :
+- [x] Créer projet : `npx create-next-app@latest frontend`
+- [x] Choisir : TypeScript, App Router, Tailwind CSS
+- [x] Installer dépendances :
   - @shadcn/ui
   - zustand
   - @tanstack/react-query
   - react-player
-- [ ] Configurer structure de dossiers selon `frontend_nextjs_plan.md`
-- [ ] Lancer dev server : `npm run dev`
+- [x] Configurer structure de dossiers selon `frontend_nextjs_plan.md`
+- [x] Lancer dev server : `npm run dev`
 
 **Critères d'acceptation :**
 - ✅ `http://localhost:3000` accessible
@@ -193,11 +193,11 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 **Description :** Implémenter le header et la structure principale
 
 **Tâches :**
-- [ ] Créer `components/layout/Header.tsx`
-- [ ] Créer navigation : Goals, Plan, Train
-- [ ] Créer `components/layout/MainLayout.tsx` (2 colonnes)
-- [ ] Implémenter design selon mockup
-- [ ] Rendre responsive (mobile, tablet, desktop)
+- [x] Créer `components/layout/Header.tsx`
+- [x] Créer navigation : Goals, Plan, Train
+- [x] Créer `components/layout/MainLayout.tsx` (2 colonnes)
+- [x] Implémenter design selon mockup
+- [x] Rendre responsive (mobile, tablet, desktop)
 
 **Critères d'acceptation :**
 - ✅ Header visible avec navigation
@@ -208,35 +208,62 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 
 ---
 
-#### FRONT-003 : Page Train - Sélection exercices
-**Description :** Créer interface de sélection d'exercices
+#### FRONT-003-1 : Ajouter le nombre d'exercice disponible pour générer le workout
+**Description :**
 
 **Tâches :**
-- [ ] Créer page `app/train/page.tsx`
-- [ ] Créer `components/exercises/ExerciseList.tsx`
-- [ ] Implémenter drag & drop avec @dnd-kit
-- [ ] Appeler API `/api/exercises` avec React Query
-- [ ] Afficher liste d'exercices sélectionnables
+- [x] Intégrer la nouvelle version de la maquette
 
 **Critères d'acceptation :**
-- ✅ Exercices chargés depuis backend
-- ✅ Drag & drop fonctionne
-- ✅ Liste mise à jour en temps réel
+- ✅ Le front colle à la maquette
 
 **Labels :** `frontend`, `train-page`, `p0-critical`
 
 ---
 
+#### FRONT-003-2 : Page Train - Choisir les exercices disponibles pour la génération du workout
+**Description :** Composant >> sur un clic on a un popup grâce auquel on peut supprimer les exercices que l'on veut enlever
+
+**Tâches :**
+- [ ] A définir
+
+**Critères d'acceptation :**
+- ✅ Les exercices se chargent depuis le backend
+- ✅ Bouton pour débloquer les exercices pas encore fait renvoie faire le popup d'inscription
+
+**Labels :** `frontend`, `train-page`, `p0-critical`
+
+---
+
+#### FRONT-003-3 : Page Train - Popup inscrivez-vous
+**Description :** Afficher un popup dès que l'on clique sur une fonctionnalité non supportée
+
+**Tâches :**
+- [ ] AI assisted
+- [ ] Dashboard
+- [ ] Goals
+- [ ] Plan
+- [ ] No repeat | No Jump | Include Warm Up | Cool Down and Streching
+
+**Critères d'acceptation :**
+- ✅ Popup
+- ✅ Drag & drop fonctionne
+- ✅ Liste mise à jour en temps réel
+
+**Labels :** `frontend`, `train-page`, `p0-critical`
+
+-----
+
 #### FRONT-004 : Panneau de configuration workout
 **Description :** Créer le panneau de configuration avec intensité et paramètres
 
 **Tâches :**
-- [ ] Créer `components/controls/QuickSetup.tsx`
-- [ ] Créer `components/controls/ParameterizedSetup.tsx`
-- [ ] Implémenter toggles : No repeat, No jump
-- [ ] Implémenter sliders : Work/Rest time
-- [ ] Implémenter checkboxes : Intensity levels
-- [ ] Gérer state avec Zustand
+- [x] Créer `components/controls/QuickSetup.tsx`
+- [x] Créer `components/controls/ParameterizedSetup.tsx`
+- [x] Implémenter toggles : No repeat, No jump
+- [x] Implémenter sliders : Work/Rest time
+- [x] Implémenter checkboxes : Intensity levels
+- [x] Gérer state avec Zustand
 
 **Critères d'acceptation :**
 - ✅ Tous les contrôles fonctionnels
@@ -244,6 +271,33 @@ Cette backlog est organisée en colonnes Trello suivant la progression : **Local
 - ✅ UI correspond au design
 
 **Labels :** `frontend`, `ui`, `controls`, `p1-high`
+
+---
+
+#### Back-006 : Algorithme de création d'une session
+**Description :** Implémenter l'algorithme de création d'une session de workout
+
+**Tâches :**
+- [x] algorithme de génération de workout
+
+**Critères d'acceptation :**
+- ✅ Tests de validation
+
+**Labels :** `frontend`, `ui`, `layout`, `p1-high`
+
+---
+
+#### Back-007 : Route de création d'une vidéo
+**Description :** Créer la route permettant de récupérer la vidéo
+
+**Tâches :**
+- [ ] Création d'une vidéo
+- [ ] Création de la route
+
+**Critères d'acceptation :**
+- ✅ On peut charger une vidéo dans le front
+
+**Labels :** `frontend`, `ui`, `layout`, `p1-high`
 
 ---
 
