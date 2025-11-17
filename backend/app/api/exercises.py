@@ -2,6 +2,7 @@
 
 import json
 import os
+import logging
 from pathlib import Path
 from typing import List, Optional
 from functools import lru_cache
@@ -11,14 +12,19 @@ from supabase import create_client, Client
 
 from ..models.exercise import Exercise
 
+# Configuration du logger
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api", tags=["exercises"])
 
 # Configuration Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+logger.info(f"SUPABASE_URL : {SUPABASE_URL}")
+
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # Flag pour basculer entre JSON local et Supabase
-USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+USE_SUPABASE = True  # os.getenv("USE_SUPABASE", "false").lower() == "true"
 
 # Chemin vers le fichier JSON des exercices (fallback)
 EXERCISES_FILE = Path(__file__).parent.parent / "models" / "exercises.json"
@@ -82,25 +88,52 @@ def load_exercises_from_supabase() -> List[Exercise]:
         HTTPException: Si erreur de connexion ou de récupération
     """
     try:
+        logger.info("Chargement exercices depuis Supabase")
+        logger.debug(f"SUPABASE_URL: {SUPABASE_URL}")
+        logger.debug(f"SUPABASE_ANON_KEY présent: {'✓' if SUPABASE_ANON_KEY else '✗'}")
+
         supabase = get_supabase_client()
 
         if not supabase:
+            logger.error("Supabase client non configuré")
             raise HTTPException(
                 status_code=500,
                 detail="Supabase non configuré (SUPABASE_URL ou SUPABASE_ANON_KEY manquant)",
             )
 
+        logger.info("Appel Supabase table('exercises').select('*')")
         # Récupérer tous les exercices
         response = supabase.table("exercises").select("*").execute()
 
+        logger.debug(f"Réponse brute: {response}")
+        logger.info(
+            f"Nombre d'exercices trouvés: {len(response.data) if response.data else 0}"
+        )
+
         if not response.data:
+            logger.warning("Aucun exercice trouvé dans Supabase")
             return []
 
         # Mapper vers le modèle Exercise
-        exercises = [Exercise.from_supabase(ex) for ex in response.data]
+        logger.info(f"Mapping de {len(response.data)} exercices")
+        exercises = []
+        for i, ex in enumerate(response.data):
+            try:
+                logger.debug(f"Mapping exercice {i+1}: {ex.get('name', 'Unknown')}")
+                exercise = Exercise.from_supabase(ex)
+                exercises.append(exercise)
+            except Exception as mapping_error:
+                logger.error(f"Erreur mapping exercice {i+1}: {str(mapping_error)}")
+                logger.debug(f"Données exercice: {ex}")
+                raise
+
+        logger.info(f"✅ {len(exercises)} exercices chargés depuis Supabase")
         return exercises
 
     except Exception as e:
+        logger.error(
+            f"Erreur dans load_exercises_from_supabase: {str(e)}", exc_info=True
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Erreur lors du chargement depuis Supabase: {str(e)}",

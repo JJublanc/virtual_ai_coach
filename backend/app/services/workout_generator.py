@@ -247,8 +247,10 @@ def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
             f"total_duration doit être positif, reçu: {workout.total_duration}"
         )
 
-    # 2. Charger tous les exercices disponibles
-    all_exercises = load_exercises_from_json()
+    # 2. Charger tous les exercices disponibles depuis Supabase
+    from ..api.exercises import load_exercises
+
+    all_exercises = load_exercises()
 
     # 3. Filtrer selon les critères de configuration
     filtered_exercises = filter_exercises(

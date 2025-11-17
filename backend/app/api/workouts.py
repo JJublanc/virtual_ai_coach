@@ -17,7 +17,6 @@ from ..models.workout import Workout
 from ..services.video_service import VideoService
 from ..services.workout_generator import (
     generate_workout_exercises,
-    load_exercises_from_json,
 )
 from ..api.exercises import load_exercises
 
@@ -501,7 +500,7 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
             )
 
         # 3. Charger les exercices complets depuis la base de données
-        all_exercises = load_exercises_from_json()
+        all_exercises = load_exercises()
 
         # Créer un mapping ID -> Exercise pour une recherche rapide
         exercises_by_id = {str(ex.id): ex for ex in all_exercises}

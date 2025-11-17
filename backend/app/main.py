@@ -1,8 +1,12 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from .api import exercises, workouts
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 app = FastAPI(
     title="Virtual AI Coach Backend",

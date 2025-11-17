@@ -81,7 +81,7 @@ class Exercise(BaseModel):
             description=data.get("description"),
             icon=data.get("icon"),
             video_url=data["video_url"],
-            thumbnail_url=data.get("thumbnail_url"),
+            thumbnail_url=None,  # Le champ n'existe pas dans la table Supabase
             default_duration=data["default_duration"],
             difficulty=Difficulty(data["difficulty"]),
             has_jump=data.get("has_jump", False),
