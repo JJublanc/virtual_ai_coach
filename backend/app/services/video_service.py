@@ -152,10 +152,24 @@ class VideoService:
         Returns:
             bool: True si succès, False sinon
         """
-        sport_room_image = self.project_root / "sport_room.png"
+        # Essayer plusieurs chemins possibles pour sport_room.png
+        possible_paths = [
+            self.project_root / "sport_room.png",  # Chemin normal
+            Path("/app/sport_room.png"),  # Railway racine app
+            Path(__file__).parent.parent.parent.parent
+            / "sport_room.png",  # Remontée explicite
+        ]
 
-        if not sport_room_image.exists():
-            logger.error(f"Image sport_room.png introuvable: {sport_room_image}")
+        sport_room_image = None
+        for path in possible_paths:
+            if path.exists():
+                sport_room_image = path
+                break
+
+        if sport_room_image is None:
+            logger.error(
+                f"Image sport_room.png introuvable dans: {[str(p) for p in possible_paths]}"
+            )
             return False
 
         command = [

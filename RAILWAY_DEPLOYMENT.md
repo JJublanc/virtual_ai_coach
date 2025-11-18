@@ -155,6 +155,23 @@ Après déploiement, testez ces endpoints :
 
 **Note** : Le fichier `requirements.txt` généré par `uv pip compile` est compatible avec `pip` standard car il utilise la syntaxe standard `package==version`.
 
+### Problème : FFmpeg non trouvé
+
+**Cause** : FFmpeg n'est pas automatiquement installé par Nixpacks sur Railway.
+
+**Solution** :
+- Créez un fichier `nixpacks.toml` à la racine du projet pour spécifier les dépendances système
+- Ajoutez `ffmpeg` dans la liste des packages à installer
+- Railway utilisera automatiquement cette configuration lors du déploiement
+
+### Problème : Image sport_room.png introuvable
+
+**Cause** : Le calcul de `project_root` ne fonctionne pas correctement sur Railway.
+
+**Solution** :
+- Modifié [`video_service.py`](backend/app/services/video_service.py:155) pour essayer plusieurs chemins possibles
+- Le service teste maintenant les chemins Railway et locaux automatiquement
+
 ### Problème : Erreur CORS
 
 **Solution** : Vérifiez que votre frontend utilise bien `http://localhost:3000` (pas `127.0.0.1`).
