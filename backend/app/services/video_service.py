@@ -12,6 +12,7 @@ import tempfile
 import os
 import hashlib
 import requests
+import shutil
 
 from ..models.exercise import Exercise
 from ..models.config import WorkoutConfig
@@ -152,10 +153,18 @@ class VideoService:
         Returns:
             bool: True si succès, False sinon
         """
+        # Trouver le chemin de ffmpeg
+        ffmpeg_path = shutil.which("ffmpeg")
+        if not ffmpeg_path:
+            logger.error("FFmpeg introuvable dans le PATH")
+            return False
+
         # Essayer plusieurs chemins possibles pour sport_room.png
         possible_paths = [
+            Path("/app/sport_room.png"),  # Railway: racine app
+            Path("/app/backend/sport_room.png"),  # Railway: dossier backend
             self.project_root / "sport_room.png",  # Chemin normal
-            Path("/app/sport_room.png"),  # Railway racine app
+            self.project_root / "backend" / "sport_room.png",  # Backend subfolder
             Path(__file__).parent.parent.parent.parent
             / "sport_room.png",  # Remontée explicite
         ]
@@ -164,6 +173,7 @@ class VideoService:
         for path in possible_paths:
             if path.exists():
                 sport_room_image = path
+                logger.info(f"Image sport_room.png trouvée: {path}")
                 break
 
         if sport_room_image is None:
@@ -173,7 +183,7 @@ class VideoService:
             return False
 
         command = [
-            "ffmpeg",
+            ffmpeg_path,
             "-loop",
             "1",  # Boucler l'image
             "-i",
@@ -284,9 +294,15 @@ class VideoService:
 
             logger.debug(f"Fichier de concaténation créé: {concat_file}")
 
+            # Trouver le chemin de ffmpeg
+            ffmpeg_path = shutil.which("ffmpeg")
+            if not ffmpeg_path:
+                logger.error("FFmpeg introuvable dans le PATH")
+                return []
+
             # Construction de la commande FFmpeg
             command = [
-                "ffmpeg",
+                ffmpeg_path,
                 "-f",
                 "concat",  # Format de concaténation
                 "-safe",

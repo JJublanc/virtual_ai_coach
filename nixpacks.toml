@@ -5,8 +5,11 @@ providers = ["python"]
 [phases.setup]
 nixPkgs = ["python313", "ffmpeg"]
 
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
+[phases.build]
+cmds = [
+    "which ffmpeg && ffmpeg -version || echo 'FFmpeg not found'",
+    "cp sport_room.png /app/backend/sport_room.png && ls -la /app/backend/sport_room.png || echo 'Failed to copy sport_room.png'"
+]
 
 [start]
 cmd = "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
