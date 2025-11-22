@@ -40,9 +40,13 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [isExerciseDescriptionExpanded, setIsExerciseDescriptionExpanded] = useState(true)
   const [lastBeepSecond, setLastBeepSecond] = useState<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
+  const [canPlay, setCanPlay] = useState(false)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
+      setIsBuffering(true)
+      setCanPlay(false)
       videoRef.current.load()
     }
   }, [videoUrl])
@@ -86,7 +90,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   }, [exerciseTimeRemaining, currentExercise, lastBeepSecond])
 
   const togglePlay = () => {
-    if (videoRef.current) {
+    if (videoRef.current && canPlay) {
       if (isPlaying) {
         videoRef.current.pause()
       } else {
@@ -175,6 +179,19 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     }
   }
 
+  const handleCanPlay = () => {
+    setIsBuffering(false)
+    setCanPlay(true)
+  }
+
+  const handleWaiting = () => {
+    setIsBuffering(true)
+  }
+
+  const handlePlaying = () => {
+    setIsBuffering(false)
+  }
+
   // Update duration when workoutInfo changes
   useEffect(() => {
     if (workoutInfo?.totalDuration) {
@@ -200,12 +217,26 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           onLoadedMetadata={handleLoadedMetadata}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onCanPlay={handleCanPlay}
+          onWaiting={handleWaiting}
+          onPlaying={handlePlaying}
         >
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support video playback.
         </video>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+      )}
+
+      {/* Buffering state - show loading when video is buffering */}
+      {videoUrl && isBuffering && !canPlay && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-900" />
+            <p className="text-gray-900 font-medium mb-2">Loading video...</p>
+            <p className="text-sm text-gray-600">Preparing your workout</p>
+          </div>
+        </div>
       )}
 
       {/* Generation state */}
@@ -235,8 +266,8 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
         </div>
       )}
 
-      {/* Video controls - only if video available */}
-      {videoUrl && !isGenerating && !error && (
+      {/* Video controls - only if video available and ready to play */}
+      {videoUrl && !isGenerating && !error && canPlay && (
         <>
           {/* BREAK overlay during rest periods */}
           {currentExercise?.is_break && (
@@ -371,12 +402,17 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
               {/* Playback controls - centered */}
               <div className="flex items-center gap-2">
-                {/* Play/pause button */}
+                {/* Play/pause button - disabled when buffering */}
                 <button
                   onClick={togglePlay}
-                  className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 hover:bg-white/30 transition-colors"
+                  disabled={isBuffering || !canPlay}
+                  className={`w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 transition-colors ${
+                    isBuffering || !canPlay ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'
+                  }`}
                 >
-                  {isPlaying ? (
+                  {isBuffering ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : isPlaying ? (
                     <Pause className="w-5 h-5 text-white" fill="white" />
                   ) : (
                     <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
