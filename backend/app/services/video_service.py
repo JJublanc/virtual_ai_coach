@@ -447,6 +447,18 @@ class VideoService:
                 logger.error("Aucune vidéo valide trouvée pour les exercices")
                 return []
 
+            # Créer le fichier de concaténation FFmpeg
+            with open(concat_file, "w") as f:
+                for video_path in video_paths:
+                    # Format FFmpeg concat: file '/path/to/video.mov'
+                    f.write(f"file '{video_path.absolute()}'\n")
+
+            # Log du contenu du fichier de concaténation
+            logger.info("=== FICHIER DE CONCATÉNATION ===")
+            with open(concat_file, "r") as f:
+                concat_content = f.read()
+                logger.info(f"Contenu de {concat_file}:\n{concat_content}")
+
             # Trouver le chemin de ffmpeg
             ffmpeg_path = shutil.which("ffmpeg")
             if not ffmpeg_path:
@@ -454,73 +466,43 @@ class VideoService:
                 return []
 
             # ===================================================================
-            # NOUVELLE APPROCHE: Utiliser filter_complex avec le filtre concat
-            # au lieu du demuxer concat. Cela permet d'appliquer des filtres
-            # à chaque entrée AVANT la concaténation, résolvant les problèmes
-            # de formats différents entre les vidéos.
+            # APPROCHE OPTIMISÉE MÉMOIRE: Utiliser le demuxer concat avec ré-encodage
+            # Le demuxer concat traite les vidéos séquentiellement (économe en RAM)
+            # Le ré-encodage garantit la compatibilité entre formats différents
             # ===================================================================
 
-            logger.info("=== CONSTRUCTION COMMANDE FFMPEG avec filter_complex ===")
+            logger.info("=== CONSTRUCTION COMMANDE FFMPEG avec concat demuxer ===")
             logger.info(f"Nombre de vidéos à concaténer: {len(video_paths)}")
 
-            # Construction de la commande FFmpeg avec filter_complex
-            command = [ffmpeg_path]
+            # Construction de la commande FFmpeg avec demuxer concat
+            command = [
+                ffmpeg_path,
+                "-f",
+                "concat",  # Format de concaténation (économe en mémoire)
+                "-safe",
+                "0",  # Permet les chemins absolus
+                "-i",
+                str(concat_file),  # Fichier de concaténation
+            ]
 
-            # Ajouter toutes les entrées vidéo
-            for i, video_path in enumerate(video_paths):
-                command.extend(["-i", str(video_path.absolute())])
-                logger.debug(f"  Input {i}: {video_path}")
-
-            # Construire le filter_complex qui:
-            # 1. Normalise chaque vidéo (résolution, fps, format pixel)
-            # 2. Concatène toutes les vidéos normalisées
-            filter_parts = []
-
-            # Filtre de normalisation pour chaque entrée
-            base_filter = "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30,format=yuv420p"
-
-            # Ajout du filtre de vitesse si nécessaire
-            if speed != 1.0:
-                pts_value = 1.0 / speed
-                base_filter += f",setpts={pts_value}*PTS"
-
-            # Créer le filtre pour chaque entrée
-            for i in range(len(video_paths)):
-                filter_parts.append(f"[{i}:v]{base_filter}[v{i}]")
-
-            # Concaténer toutes les vidéos normalisées
-            concat_inputs = "".join([f"[v{i}]" for i in range(len(video_paths))])
-            filter_parts.append(
-                f"{concat_inputs}concat=n={len(video_paths)}:v=1:a=0[outv]"
-            )
-
-            # Joindre tous les filtres
-            filter_complex = ";".join(filter_parts)
-
-            logger.info(f"Filter complex construit avec {len(video_paths)} entrées")
-            logger.debug(
-                f"Filter complex: {filter_complex[:500]}..."
-            )  # Tronquer pour le log
-
-            # Ajouter le filter_complex à la commande
-            command.extend(["-filter_complex", filter_complex])
-
-            # Mapper la sortie du filtre
-            command.extend(["-map", "[outv]"])
-
-            # Options de sortie optimisées pour le streaming progressif MP4
+            # Options de sortie avec ré-encodage complet pour uniformiser les formats
             command.extend(
                 [
                     "-c:v",
-                    "libx264",  # Codec H.264
+                    "libx264",  # Codec H.264 - ré-encode toutes les vidéos
                     "-preset",
                     "ultrafast",  # Preset rapide pour réduire la latence
+                    "-crf",
+                    "23",  # Qualité constante (bon équilibre qualité/taille)
                     "-pix_fmt",
-                    "yuv420p",  # Format pixel compatible
+                    "yuv420p",  # Format pixel compatible navigateurs
+                    "-r",
+                    "30",  # Forcer 30 fps en sortie
                     "-movflags",
-                    "frag_keyframe+empty_moov",  # Streaming fragmenté MP4 (compatible avec pipe:1)
+                    "frag_keyframe+empty_moov",  # Streaming fragmenté MP4
                     "-g",
-                    "30",  # GOP size - keyframe toutes les 30 frames pour meilleure navigation
+                    "30",  # GOP size - keyframe toutes les 30 frames
+                    "-an",  # Pas d'audio
                     "-y",  # Overwrite output file
                     str(output_path),
                 ]
