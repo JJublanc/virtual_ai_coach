@@ -40,12 +40,12 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [isExerciseDescriptionExpanded, setIsExerciseDescriptionExpanded] = useState(true)
   const [lastBeepSecond, setLastBeepSecond] = useState<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isBuffering, setIsBuffering] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(false)
   const [canPlay, setCanPlay] = useState(false)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
-      setIsBuffering(true)
+      setIsInitialLoading(true)
       setCanPlay(false)
       videoRef.current.load()
     }
@@ -180,16 +180,17 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   }
 
   const handleCanPlay = () => {
-    setIsBuffering(false)
+    setIsInitialLoading(false)
     setCanPlay(true)
   }
 
   const handleWaiting = () => {
-    setIsBuffering(true)
+    // Ne rien faire - on ne veut pas bloquer la lecture pendant les micro-bufferings
   }
 
   const handlePlaying = () => {
-    setIsBuffering(false)
+    // La vidéo joue, s'assurer que le loading initial est terminé
+    setIsInitialLoading(false)
   }
 
   // Update duration when workoutInfo changes
@@ -228,8 +229,8 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
       )}
 
-      {/* Buffering state - show loading when video is buffering */}
-      {videoUrl && isBuffering && !canPlay && (
+      {/* Buffering state - show loading only during initial load */}
+      {videoUrl && isInitialLoading && !canPlay && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-900" />
@@ -402,17 +403,15 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
               {/* Playback controls - centered */}
               <div className="flex items-center gap-2">
-                {/* Play/pause button - disabled when buffering */}
+                {/* Play/pause button - disabled only during initial loading */}
                 <button
                   onClick={togglePlay}
-                  disabled={isBuffering || !canPlay}
+                  disabled={!canPlay}
                   className={`w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 transition-colors ${
-                    isBuffering || !canPlay ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'
+                    !canPlay ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'
                   }`}
                 >
-                  {isBuffering ? (
-                    <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  ) : isPlaying ? (
+                  {isPlaying ? (
                     <Pause className="w-5 h-5 text-white" fill="white" />
                   ) : (
                     <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
