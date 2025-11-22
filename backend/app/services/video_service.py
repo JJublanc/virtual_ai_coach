@@ -476,17 +476,21 @@ class VideoService:
                 str(concat_file),  # Fichier de concaténation
             ]
 
+            # Filtre vidéo pour uniformiser toutes les sources (résolution, framerate, format pixel)
+            # Ceci est essentiel pour la concaténation de vidéos de sources différentes
+            filter_parts = [
+                "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30"
+            ]
+
             # Ajout du filtre de vitesse si nécessaire
             if speed != 1.0:
                 pts_value = 1.0 / speed
-                command.extend(
-                    [
-                        "-filter:v",
-                        f"setpts={pts_value}*PTS",
-                    ]
-                )
+                filter_parts.append(f"setpts={pts_value}*PTS")
 
-            # Options de sortie optimisées pour le streaming
+            # Appliquer le filtre combiné
+            command.extend(["-filter:v", ",".join(filter_parts)])
+
+            # Options de sortie optimisées pour le streaming progressif MP4
             command.extend(
                 [
                     "-c:v",
@@ -496,7 +500,9 @@ class VideoService:
                     "-pix_fmt",
                     "yuv420p",  # Format pixel compatible
                     "-movflags",
-                    "faststart+frag_keyframe+empty_moov+dash",  # Optimisation streaming progressif
+                    "frag_keyframe+empty_moov",  # Streaming fragmenté MP4 (compatible avec pipe:1)
+                    "-g",
+                    "30",  # GOP size - keyframe toutes les 30 frames pour meilleure navigation
                     "-an",  # Pas d'audio pour l'instant
                     "-y",  # Overwrite output file
                     str(output_path),
