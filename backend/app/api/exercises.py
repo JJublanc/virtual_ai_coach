@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional
 from functools import lru_cache
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from supabase import create_client, Client
 
 from ..models.exercise import Exercise
@@ -87,12 +87,18 @@ def load_exercises_from_supabase() -> List[Exercise]:
     Raises:
         HTTPException: Si erreur de connexion ou de récupération
     """
-    try:
-        logger.info("Chargement exercices depuis Supabase")
-        logger.debug(f"SUPABASE_URL: {SUPABASE_URL}")
-        logger.debug(f"SUPABASE_ANON_KEY présent: {'✓' if SUPABASE_ANON_KEY else '✗'}")
+    import time
 
+    try:
+        total_start = time.time()
+        logger.info("=== DIAGNOSTIC PERFORMANCE SUPABASE ===")
+        logger.info("Chargement exercices depuis Supabase")
+
+        # Timing: Création client
+        client_start = time.time()
         supabase = get_supabase_client()
+        client_time = (time.time() - client_start) * 1000
+        logger.info(f"⏱️ Création client Supabase: {client_time:.0f}ms")
 
         if not supabase:
             logger.error("Supabase client non configuré")
@@ -101,11 +107,13 @@ def load_exercises_from_supabase() -> List[Exercise]:
                 detail="Supabase non configuré (SUPABASE_URL ou SUPABASE_ANON_KEY manquant)",
             )
 
+        # Timing: Requête Supabase
+        query_start = time.time()
         logger.info("Appel Supabase table('exercises').select('*')")
-        # Récupérer tous les exercices
         response = supabase.table("exercises").select("*").execute()
+        query_time = (time.time() - query_start) * 1000
+        logger.info(f"⏱️ Requête Supabase: {query_time:.0f}ms")
 
-        logger.debug(f"Réponse brute: {response}")
         logger.info(
             f"Nombre d'exercices trouvés: {len(response.data) if response.data else 0}"
         )
@@ -114,20 +122,34 @@ def load_exercises_from_supabase() -> List[Exercise]:
             logger.warning("Aucun exercice trouvé dans Supabase")
             return []
 
-        # Mapper vers le modèle Exercise
+        # Timing: Mapping
+        mapping_start = time.time()
         logger.info(f"Mapping de {len(response.data)} exercices")
         exercises = []
         for i, ex in enumerate(response.data):
             try:
-                logger.debug(f"Mapping exercice {i+1}: {ex.get('name', 'Unknown')}")
                 exercise = Exercise.from_supabase(ex)
                 exercises.append(exercise)
             except Exception as mapping_error:
                 logger.error(f"Erreur mapping exercice {i+1}: {str(mapping_error)}")
                 logger.debug(f"Données exercice: {ex}")
                 raise
+        mapping_time = (time.time() - mapping_start) * 1000
+        logger.info(f"⏱️ Mapping exercices: {mapping_time:.0f}ms")
 
+        total_time = (time.time() - total_start) * 1000
+        logger.info(f"=== TOTAL: {total_time:.0f}ms ===")
+        logger.info(
+            f"  - Client: {client_time:.0f}ms ({client_time/total_time*100:.0f}%)"
+        )
+        logger.info(
+            f"  - Requête: {query_time:.0f}ms ({query_time/total_time*100:.0f}%)"
+        )
+        logger.info(
+            f"  - Mapping: {mapping_time:.0f}ms ({mapping_time/total_time*100:.0f}%)"
+        )
         logger.info(f"✅ {len(exercises)} exercices chargés depuis Supabase")
+
         return exercises
 
     except Exception as e:
@@ -154,9 +176,12 @@ def load_exercises() -> List[Exercise]:
 
 
 @router.get("/exercises", response_model=List[Exercise])
-async def get_exercises() -> List[Exercise]:
+async def get_exercises(response: Response) -> List[Exercise]:
     """
     Récupère la liste de tous les exercices disponibles.
+
+    OPTIMISATION: Cache HTTP activé pour réduire la latence.
+    Les exercices sont mis en cache pendant 1 heure côté navigateur.
 
     Returns:
         List[Exercise]: Liste des exercices avec leurs métadonnées
@@ -182,6 +207,16 @@ async def get_exercises() -> List[Exercise]:
         ]
         ```
     """
+    # OPTIMISATION: Ajouter headers de cache HTTP
+    # Cache public pendant 1 heure (3600 secondes)
+    response.headers[
+        "Cache-Control"
+    ] = "public, max-age=3600, stale-while-revalidate=86400"
+    response.headers["ETag"] = "exercises-v1"
+
+    # Log pour monitoring
+    logger.debug("Headers de cache ajoutés: Cache-Control=public, max-age=3600")
+
     return load_exercises()
 
 

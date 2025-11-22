@@ -855,11 +855,14 @@ async def stream_workout_progressive(workout_data):
     command = build_optimized_ffmpeg_command(workout_data)
     logger.debug(f"Commande FFmpeg: {' '.join(command)}")
 
-    # Buffer pour accumuler les premières données (moov atom)
+    # OPTIMISATION 2: Buffer réduit pour démarrer le streaming plus vite
+    # Réduit de 1MB à 256KB pour diminuer le temps d'attente initial
     initial_buffer = bytearray()
-    buffer_size = 1024 * 1024  # 1MB buffer initial
+    buffer_size = 256 * 1024  # 256KB buffer initial (optimisé pour démarrage rapide)
 
     try:
+        logger.info(f"Lancement de FFmpeg avec commande: {' '.join(command)}")
+
         process = await asyncio.create_subprocess_exec(
             *command,
             stdout=asyncio.subprocess.PIPE,
@@ -868,61 +871,153 @@ async def stream_workout_progressive(workout_data):
 
         logger.info("Processus FFmpeg démarré, buffering des premières données...")
 
-        # Lire et buffer les premières données
+        # Lire stderr en arrière-plan pour capturer les erreurs
+        async def read_stderr():
+            stderr_data = []
+            while True:
+                line = await process.stderr.readline()
+                if not line:
+                    break
+                decoded_line = line.decode("utf-8", errors="replace").strip()
+                if decoded_line:
+                    stderr_data.append(decoded_line)
+                    # Log les erreurs importantes
+                    if (
+                        "error" in decoded_line.lower()
+                        or "no such file" in decoded_line.lower()
+                    ):
+                        logger.error(f"FFmpeg stderr: {decoded_line}")
+                    elif "warning" in decoded_line.lower():
+                        logger.warning(f"FFmpeg stderr: {decoded_line}")
+            return "\n".join(stderr_data)
+
+        # Démarrer la lecture de stderr en arrière-plan
+        stderr_task = asyncio.create_task(read_stderr())
+
+        # Lire et buffer les premières données avec timeout
+        timeout_seconds = 120  # 2 minutes de timeout pour le buffer initial
+        start_time = asyncio.get_event_loop().time()
+
         while len(initial_buffer) < buffer_size:
-            chunk = await process.stdout.read(64 * 1024)  # 64KB chunks
+            # Vérifier le timeout
+            elapsed = asyncio.get_event_loop().time() - start_time
+            if elapsed > timeout_seconds:
+                logger.error(f"Timeout après {elapsed}s lors du buffering initial")
+                # Récupérer les erreurs stderr
+                stderr_output = await asyncio.wait_for(stderr_task, timeout=5)
+                logger.error(f"FFmpeg stderr complet: {stderr_output}")
+                raise HTTPException(500, f"Timeout FFmpeg après {int(elapsed)}s")
+
+            try:
+                chunk = await asyncio.wait_for(
+                    process.stdout.read(64 * 1024), timeout=30
+                )  # 64KB chunks avec timeout 30s
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"Timeout lors de la lecture d'un chunk, buffer actuel: {len(initial_buffer)} bytes"
+                )
+                continue
+
             if not chunk:
                 # Vérifier si le processus s'est terminé avec une erreur
                 return_code = process.returncode
                 if return_code is not None and return_code != 0:
-                    stderr_output = await process.stderr.read()
-                    error_msg = (
-                        stderr_output.decode("utf-8")
-                        if stderr_output
-                        else "Unknown FFmpeg error"
-                    )
+                    stderr_output = await asyncio.wait_for(stderr_task, timeout=10)
                     logger.error(
-                        f"FFmpeg s'est terminé avec le code {return_code}: {error_msg}"
+                        f"FFmpeg s'est terminé avec le code {return_code}: {stderr_output}"
                     )
-                    raise HTTPException(500, f"Erreur FFmpeg: {error_msg}")
+                    raise HTTPException(
+                        500,
+                        f"Erreur FFmpeg (code {return_code}): {stderr_output[:500]}",
+                    )
                 break
             initial_buffer.extend(chunk)
+
+            # Log de progression
+            if len(initial_buffer) % (256 * 1024) == 0:  # Tous les 256KB
+                logger.debug(f"Buffer progression: {len(initial_buffer)} bytes")
 
         logger.info(f"Buffer initial de {len(initial_buffer)} bytes prêt")
 
         # Vérifier si nous avons des données à envoyer
         if len(initial_buffer) == 0:
             # Vérifier les erreurs FFmpeg
-            stderr_output = await process.stderr.read()
-            error_msg = (
-                stderr_output.decode("utf-8")
-                if stderr_output
-                else "FFmpeg n'a produit aucune donnée"
+            stderr_output = await asyncio.wait_for(stderr_task, timeout=10)
+            logger.error(f"Aucune donnée FFmpeg. Stderr: {stderr_output}")
+            raise HTTPException(
+                500, f"FFmpeg n'a produit aucune donnée: {stderr_output[:500]}"
             )
-            logger.error(f"Aucune donnée FFmpeg: {error_msg}")
-            raise HTTPException(500, f"FFmpeg n'a produit aucune donnée: {error_msg}")
+
+        # === LOGS D'ENVOI DES CHUNKS ===
+        logger.info("=== DÉBUT ENVOI CHUNKS AU FRONTEND ===")
+        logger.info(
+            f"Buffer initial prêt: {len(initial_buffer)} bytes ({len(initial_buffer)/1024:.1f} KB)"
+        )
 
         # Envoyer le buffer initial (contient moov atom)
+        logger.info(f"Envoi buffer initial: {len(initial_buffer)} bytes")
         yield bytes(initial_buffer)
+        logger.info("✓ Buffer initial envoyé au frontend")
+
+        total_bytes_sent = len(initial_buffer)
 
         # Continuer le streaming normal
         chunk_count = 0
+        start_streaming_time = asyncio.get_event_loop().time()
+
         while True:
             chunk = await process.stdout.read(256 * 1024)  # 256KB chunks
             if not chunk:
                 break
             chunk_count += 1
-            if chunk_count % 100 == 0:  # Log tous les 100 chunks (~25MB)
-                logger.debug(f"Streamé {chunk_count} chunks")
+            chunk_size = len(chunk)
+            total_bytes_sent += chunk_size
+
+            # Log plus fréquent pour le débogage
+            if chunk_count <= 10:  # Les 10 premiers chunks
+                logger.info(
+                    f"Chunk {chunk_count}: {chunk_size} bytes envoyé (total: {total_bytes_sent/1024:.1f} KB)"
+                )
+            elif chunk_count % 50 == 0:  # Puis tous les 50 chunks (~12.5MB)
+                elapsed = asyncio.get_event_loop().time() - start_streaming_time
+                speed = total_bytes_sent / elapsed / 1024 if elapsed > 0 else 0
+                logger.info(
+                    f"Chunk {chunk_count}: total {total_bytes_sent/1024/1024:.1f} MB envoyé, vitesse: {speed:.1f} KB/s"
+                )
+
             yield chunk
 
-        logger.info(f"Streaming terminé, {chunk_count} chunks envoyés")
+        # Statistiques finales
+        total_time = asyncio.get_event_loop().time() - start_streaming_time
+        avg_speed = total_bytes_sent / total_time / 1024 if total_time > 0 else 0
+
+        logger.info("=== FIN STREAMING ===")
+        logger.info(f"Total chunks envoyés: {chunk_count}")
+        logger.info(
+            f"Total bytes envoyés: {total_bytes_sent} ({total_bytes_sent/1024/1024:.2f} MB)"
+        )
+        logger.info(f"Temps total: {total_time:.1f}s")
+        logger.info(f"Vitesse moyenne: {avg_speed:.1f} KB/s")
 
         # Attendre la fin du processus
-        await process.wait()
+        return_code = await process.wait()
+        logger.info(f"FFmpeg terminé avec code: {return_code}")
+
+        # Récupérer et logger les dernières erreurs stderr
+        try:
+            stderr_final = await asyncio.wait_for(stderr_task, timeout=5)
+            if stderr_final:
+                logger.info(
+                    f"FFmpeg stderr final: {stderr_final[-500:]}"
+                )  # Derniers 500 chars
+        except asyncio.TimeoutError:
+            logger.warning("Timeout lors de la récupération du stderr final")
 
     except Exception as e:
         logger.error(f"Erreur lors du streaming progressif: {e}")
+        import traceback
+
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(500, f"Erreur de streaming: {str(e)}")
 
 
