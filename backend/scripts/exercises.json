@@ -1,0 +1,50 @@
+[
+    {
+        "id": "bbc66053-12ec-4b7e-937a-276761ccbfc1",
+        "name": "Push-ups",
+        "description": "Placez-vous en position de planche, mains écartées largeur d'épaules. Gardez le corps aligné, descendez jusqu'à ce que la poitrine touche presque le sol, puis remontez en poussant sur les bras.",
+        "icon": "💪",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/push_ups.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["chest", "triceps", "shoulders"],
+            "equipment_needed": [],
+            "calories_per_min": 7.0
+        }
+    },
+    {
+        "id": "a1b2c3d4-5e6f-7890-abcd-ef1234567890",
+        "name": "Air Squat",
+        "description": "Debout, pieds écartés largeur d'épaules, pointes légèrement vers l'extérieur. Descendez en poussant les hanches vers l'arrière comme pour vous asseoir, gardez le dos droit et remontez en poussant sur les talons.",
+        "icon": "🦵",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/air_squat.mov",
+        "default_duration": 60,
+        "difficulty": "easy",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["quadriceps", "glutes", "core"],
+            "equipment_needed": [],
+            "calories_per_min": 6.5
+        }
+    },
+    {
+        "id": "f9e8d7c6-b5a4-3210-9876-543210fedcba",
+        "name": "Quick Feet Half Burpee",
+        "description": "Position debout, effectuez des petits pas rapides sur place puis descendez en position de planche. Remontez rapidement en position debout. Mouvement explosif et cardio.",
+        "icon": "🏋️",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/quick_feet_half_burpees.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["core", "shoulders"],
+            "equipment_needed": [],
+            "calories_per_min": 5.0
+        }
+    }
+]

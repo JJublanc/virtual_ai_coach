@@ -21,7 +21,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Chemins des fichiers
-const EXERCISES_JSON_PATH = path.join(__dirname, '../app/models/exercises.json');
+const EXERCISES_JSON_PATH = path.join(__dirname, '../scripts/exercises.json');
 const VIDEO_MAPPING_PATH = path.join(__dirname, 'video_urls_mapping.json');
 
 // Validation des variables d'environnement

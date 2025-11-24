@@ -12,6 +12,10 @@ from supabase import create_client, Client
 
 from ..models.exercise import Exercise
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Configuration du logger
 logger = logging.getLogger(__name__)
 

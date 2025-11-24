@@ -177,6 +177,59 @@ class VideoService:
             logger.error(f"Erreur inattendue lors de l'ajustement de vitesse: {e}")
             return False
 
+    def _trim_video(self, input_path: Path, output_path: Path, duration: int) -> bool:
+        """
+        Trimme une vidéo à une durée spécifique.
+
+        Args:
+            input_path: Chemin de la vidéo source
+            output_path: Chemin de la vidéo de sortie
+            duration: Durée maximale en secondes
+
+        Returns:
+            bool: True si succès, False sinon
+        """
+        try:
+            ffmpeg_path = shutil.which("ffmpeg")
+            if not ffmpeg_path:
+                logger.error("FFmpeg introuvable")
+                return False
+
+            command = [
+                ffmpeg_path,
+                "-i",
+                str(input_path),
+                "-t",
+                str(duration),  # Durée maximale
+                "-c:v",
+                "libx264",
+                "-preset",
+                "ultrafast",
+                "-crf",
+                "23",
+                "-pix_fmt",
+                "yuv420p",
+                "-r",
+                "30",
+                "-an",  # Pas d'audio
+                "-y",
+                str(output_path),
+            ]
+
+            subprocess.run(command, capture_output=True, text=True, check=True)
+
+            if output_path.exists():
+                logger.debug(f"Vidéo trimée à {duration}s: {output_path}")
+                return True
+            return False
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Erreur trim vidéo: {e.stderr}")
+            return False
+        except Exception as e:
+            logger.error(f"Erreur inattendue trim vidéo: {e}")
+            return False
+
     def generate_break_video(self, duration: int, output_path: Path) -> bool:
         """
         Génère une vidéo statique de break avec l'image sport_room.png
@@ -338,6 +391,7 @@ class VideoService:
             # Timing pour chaque étape
             video_download_times = []
             break_generation_times = []
+            trimmed_video_paths = []  # Pour stocker les vidéos trimées à nettoyer
 
             for idx, exercise in enumerate(exercises):
                 # 1. Ajouter la vidéo d'exercice avec timing
@@ -348,10 +402,22 @@ class VideoService:
 
                 if video_path and video_path.exists():
                     file_size = video_path.stat().st_size if video_path.exists() else 0
-                    video_paths.append(video_path)
-                    logger.info(
-                        f"✓ Exercice {idx + 1}/{len(exercises)}: {exercise.name} ({video_time:.0f}ms)"
-                    )
+
+                    # Trimmer la vidéo au work_time pour éviter le contenu excédentaire
+                    trimmed_path = temp_dir / f"trimmed_{idx}_{os.getpid()}.mp4"
+                    if self._trim_video(video_path, trimmed_path, work_time):
+                        video_paths.append(trimmed_path)
+                        trimmed_video_paths.append(trimmed_path)
+                        logger.info(
+                            f"✓ Exercice {idx + 1}/{len(exercises)}: {exercise.name} (trimé à {work_time}s) ({video_time:.0f}ms)"
+                        )
+                    else:
+                        # Si le trim échoue, utiliser la vidéo originale
+                        video_paths.append(video_path)
+                        logger.warning(
+                            f"⚠ Exercice {idx + 1}/{len(exercises)}: {exercise.name} (trim échoué, utilisation originale)"
+                        )
+
                     logger.info(f"  -> Chemin: {video_path}")
                     logger.info(f"  -> Taille: {file_size / 1024:.1f} KB")
                 else:

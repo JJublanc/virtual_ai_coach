@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from ..models.config import WorkoutConfig
 from ..models.exercise import Exercise
 from ..models.workout import Workout
-from ..services.video_service import VideoService
+from ..services.video_service_optimized import OptimizedVideoService
 from ..services.workout_generator import (
     generate_workout_exercises,
 )
@@ -325,11 +325,11 @@ async def generate_workout_video(request: GenerateVideoRequest):
                 detail="Aucun exercice valide sélectionné",
             )
 
-        # 3. Initialiser le service vidéo
+        # 3. Initialiser le service vidéo optimisé
         project_root = Path(
             __file__
         ).parent.parent.parent.parent  # Remonter à la racine du projet
-        video_service = VideoService(project_root=project_root)
+        video_service = OptimizedVideoService(project_root=project_root)
 
         # 4. Construire la commande FFmpeg pour le streaming
         # Note: On va utiliser stdout pour le streaming, donc on utilise 'pipe:1'
@@ -530,9 +530,9 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
 
         logger.info(f"{len(selected_exercises)} exercices chargés pour la vidéo")
 
-        # 4. Initialiser le service vidéo
+        # 4. Initialiser le service vidéo optimisé
         project_root = Path(__file__).parent.parent.parent.parent
-        video_service = VideoService(project_root=project_root)
+        video_service = OptimizedVideoService(project_root=project_root)
 
         # 5. Préparer la commande FFmpeg pour le streaming
         speed = video_service.get_speed_multiplier(request.config.intensity)
@@ -1056,11 +1056,11 @@ def build_optimized_ffmpeg_command(workout_data):
     if not exercises or not config:
         raise HTTPException(500, "Données de workout incomplètes")
 
-    # Utiliser le service vidéo existant
+    # Utiliser le service vidéo optimisé
     from pathlib import Path
 
     project_root = Path(__file__).parent.parent.parent  # Remonter à la racine du projet
-    video_service = VideoService(project_root=project_root)
+    video_service = OptimizedVideoService(project_root=project_root)
 
     # Créer un fichier de sortie temporaire (pipe:1 pour streaming)
     output_path = Path("pipe:1")

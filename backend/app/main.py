@@ -15,13 +15,9 @@ app = FastAPI(
 )
 
 # Configuration CORS pour permettre les requêtes du frontend
-# Frontend Next.js local en développement
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Frontend Next.js local
-        "http://127.0.0.1:3000",  # Alternative localhost
-    ],
+    allow_origins=["*"],  # À restreindre en production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
