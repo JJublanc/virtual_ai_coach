@@ -1043,11 +1043,12 @@ async def handle_range_request(workout_data, range_header: str):
 
 def build_optimized_ffmpeg_command(workout_data):
     """
-    Construit une commande FFmpeg optimisée pour le streaming progressif
-    basée sur les données du workout.
+    Construit une commande FFmpeg optimisée pour le streaming progressif.
+    Utilise OptimizedVideoService pour la construction de la commande.
     """
-    # Pour le moment, utiliser la logique existante
-    # Cette fonction sera étendue dans les phases suivantes
+    import tempfile
+    import os
+    from pathlib import Path
 
     # Récupérer les exercices depuis workout_data (dictionnaire)
     exercises = workout_data.get("exercises", [])
@@ -1057,29 +1058,68 @@ def build_optimized_ffmpeg_command(workout_data):
         raise HTTPException(500, "Données de workout incomplètes")
 
     # Utiliser le service vidéo optimisé
-    from pathlib import Path
-
-    project_root = Path(__file__).parent.parent.parent  # Remonter à la racine du projet
+    project_root = Path(__file__).parent.parent.parent
     video_service = OptimizedVideoService(project_root=project_root)
 
-    # Créer un fichier de sortie temporaire (pipe:1 pour streaming)
-    output_path = Path("pipe:1")
+    # Préparer les chemins des vidéos et créer le fichier de concat
+    temp_dir = Path(tempfile.gettempdir())
+    concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
-    # Construire la commande de base
-    command = video_service.build_ffmpeg_command(exercises, config, output_path)
+    video_paths = []
+    for exercise in exercises:
+        video_path = video_service._resolve_video_path(exercise)
+        if video_path and video_path.exists():
+            video_paths.append(video_path)
+            logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
+        else:
+            logger.error(f"Vidéo manquante pour: {exercise.name}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Fichier vidéo manquant pour l'exercice '{exercise.name}'",
+            )
 
-    if not command:
-        return []
+    # Créer le fichier de concaténation
+    with open(concat_file, "w") as f:
+        for video_path in video_paths:
+            f.write(f"file '{video_path.absolute()}'\n")
 
-    # Modifier la commande pour le streaming via pipe:1
-    # Remplacer "pipe:1" par "-f mp4 pipe:1"
-    for i, arg in enumerate(command):
-        if arg == "pipe:1":
-            # Remplacer par le format MP4 suivi de pipe:1
-            command[i] = "-f"
-            command.insert(i + 1, "mp4")
-            command.insert(i + 2, "pipe:1")
-            break
+    logger.debug(f"Fichier de concaténation créé: {concat_file}")
+
+    # Construire la commande FFmpeg pour streaming vers stdout
+    speed = video_service.get_speed_multiplier(config.intensity)
+
+    command = [
+        "ffmpeg",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        str(concat_file),
+    ]
+
+    # Ajout du filtre de vitesse si nécessaire
+    if speed != 1.0:
+        pts_value = 1.0 / speed
+        command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
+
+    # Options de sortie optimisées pour le streaming vers stdout
+    command.extend(
+        [
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "frag_keyframe+empty_moov",
+            "-f",
+            "mp4",
+            "-an",
+            "pipe:1",
+        ]
+    )
 
     return command
 
