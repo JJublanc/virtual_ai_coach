@@ -20,7 +20,7 @@ export function ParameterizedSetup() {
     <div className="space-y-4">
       {/* Intervals - Coming Soon Wrapper */}
       <div className="relative">
-        <div className="pointer-events-none opacity-50">
+        <div className="pointer-events-none opacity-90">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">intervals</span>
             <span className="text-sm font-medium">{config.intervals.work_time}s/{config.intervals.rest_time}s</span>
@@ -41,87 +41,79 @@ export function ParameterizedSetup() {
         </div>
         <div
           onClick={() => openModal('Advanced Intervals')}
-          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
-        >
-          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
-            Personnalisation avancée bientôt disponible
-          </span>
-        </div>
+          className="absolute inset-0 cursor-pointer bg-white/30 hover:bg-white/40 transition-colors rounded-lg"
+        />
       </div>
 
-      {/* Toggles */}
-      <div className="space-y-2">
-        <label className="flex items-center justify-between cursor-pointer">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 flex items-center justify-center">
-              <Ban className="w-5 h-5 text-gray-600" />
+      {/* Toggles - Coming Soon Wrapper */}
+      <div className="relative">
+        <div className="pointer-events-none opacity-90 space-y-2">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 flex items-center justify-center">
+                <Ban className="w-5 h-5 text-gray-600" />
+              </div>
+              <span className="text-sm">No repeat</span>
             </div>
-            <span className="text-sm">No repeat</span>
-          </div>
-          <div
-            className={`relative inline-block w-11 h-6 rounded-full transition-colors ${
-              config.no_repeat ? 'bg-gray-900' : 'bg-gray-300'
-            }`}
-            onClick={toggleNoRepeat}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
-                config.no_repeat ? 'translate-x-5' : 'translate-x-0'
+            <div
+              className={`relative inline-block w-11 h-6 rounded-full transition-colors ${
+                config.no_repeat ? 'bg-gray-900' : 'bg-gray-300'
               }`}
-            />
-          </div>
-        </label>
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                  config.no_repeat ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </div>
+          </label>
 
-        <label className="flex items-center justify-between cursor-pointer">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 flex items-center justify-center">
-              <ArrowUp className="w-5 h-5 text-gray-600" strokeWidth={2.5} />
+          <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 flex items-center justify-center">
+                <ArrowUp className="w-5 h-5 text-gray-600" strokeWidth={2.5} />
+              </div>
+              <span className="text-sm">No jump</span>
             </div>
-            <span className="text-sm">No jump</span>
-          </div>
-          <div
-            className={`relative inline-block w-11 h-6 rounded-full transition-colors ${
-              config.no_jump ? 'bg-gray-900' : 'bg-gray-300'
-            }`}
-            onClick={toggleNoJump}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
-                config.no_jump ? 'translate-x-5' : 'translate-x-0'
+            <div
+              className={`relative inline-block w-11 h-6 rounded-full transition-colors ${
+                config.no_jump ? 'bg-gray-900' : 'bg-gray-300'
               }`}
-            />
-          </div>
-        </label>
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                  config.no_jump ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </div>
+          </label>
+        </div>
+        <div
+          onClick={() => openModal('Exercise Filters')}
+          className="absolute inset-0 cursor-pointer bg-white/30 hover:bg-white/40 transition-colors rounded-lg"
+        />
       </div>
 
       {/* Intensity Checkboxes - Coming Soon Wrapper */}
       <div className="relative">
-        <div className="pointer-events-none opacity-50">
+        <div className="pointer-events-none opacity-90">
           <IntensityCheckboxes />
         </div>
         <div
           onClick={() => openModal('Custom Intensity')}
-          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
-        >
-          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
-            Personnalisation bientôt disponible
-          </span>
-        </div>
+          className="absolute inset-0 cursor-pointer bg-white/30 hover:bg-white/40 transition-colors rounded-lg"
+        />
       </div>
 
       {/* Warmup Options - Coming Soon Wrapper */}
       <div className="relative">
-        <div className="pointer-events-none opacity-50">
+        <div className="pointer-events-none opacity-90">
           <WarmupOptions />
         </div>
         <div
           onClick={() => openModal('Advanced Warmup')}
-          className="absolute inset-0 cursor-pointer flex items-center justify-center bg-white/60 hover:bg-white/70 transition-colors rounded-lg"
-        >
-          <span className="text-xs font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
-            Personnalisation bientôt disponible
-          </span>
-        </div>
+          className="absolute inset-0 cursor-pointer bg-white/30 hover:bg-white/40 transition-colors rounded-lg"
+        />
       </div>
     </div>
   )

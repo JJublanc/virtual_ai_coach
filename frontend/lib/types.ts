@@ -108,3 +108,4 @@ export type FeatureName =
   | 'Advanced Warmup'
   | 'AI Assistant'
   | 'Select Exercises'
+  | 'Exercise Filters'
