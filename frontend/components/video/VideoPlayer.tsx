@@ -145,12 +145,17 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       // Calculate which exercise is in progress and remaining time
       if (workoutExercises.length > 0) {
         let cumulativeTime = 0
+        let exerciseCount = 0 // Count only non-break exercises
         for (let i = 0; i < workoutExercises.length; i++) {
           const exercise = workoutExercises[i]
           const exerciseEndTime = cumulativeTime + exercise.duration
           if (time >= cumulativeTime && time < exerciseEndTime) {
             setCurrentExercise(exercise)
-            setCurrentExerciseIndex(i + 1) // Index starts at 1
+            // Only increment exercise count for non-break exercises
+            if (!exercise.is_break) {
+              exerciseCount++
+            }
+            setCurrentExerciseIndex(exerciseCount)
             // Notify parent of exercise change
             if (onExerciseChange) {
               onExerciseChange(i)
@@ -161,6 +166,10 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             break
           }
           cumulativeTime += exercise.duration
+          // Count non-break exercises that have passed
+          if (!exercise.is_break) {
+            exerciseCount++
+          }
         }
       }
     }
@@ -388,7 +397,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             {/* Current exercise indicator - below timer */}
             <div className="mt-2 text-center">
               <span className="text-white text-sm font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
-                {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.length}` : '1 / -'}
+                {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.filter(ex => !ex.is_break).length}` : '1 / -'}
               </span>
             </div>
           </div>

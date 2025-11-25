@@ -48,6 +48,8 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
                 const isBreak = exercise.is_break
                 const IconComponent = getExerciseIcon(exercise.name)
                 const iconColorClass = getIconColorClasses(isBreak)
+                // Calculate exercise number excluding breaks
+                const exerciseNumber = exercises.slice(0, index + 1).filter(ex => !ex.is_break).length
 
                 return (
                   <div
@@ -62,17 +64,24 @@ export function ExerciseList({ exercises, workoutInfo, activeExerciseIndex = 0 }
                           : 'bg-white border border-gray-200 hover:shadow-md'
                     }`}
                   >
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                      isBreak
-                        ? isActive
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-blue-200 text-blue-700'
-                        : isActive
+                    {!isBreak && (
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                        isActive
                           ? 'bg-green-500 text-white'
                           : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {exercise.order}
-                    </div>
+                      }`}>
+                        {exerciseNumber}
+                      </div>
+                    )}
+                    {isBreak && (
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                        isActive
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-200 text-blue-700'
+                      }`}>
+                        <Clock className="w-4 h-4" />
+                      </div>
+                    )}
                     <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
                       isBreak
                         ? 'bg-blue-50'
