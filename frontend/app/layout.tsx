@@ -17,8 +17,21 @@ const geistMono = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Virtual AI Coach",
-  description: "Your personal AI-powered workout trainer",
+  title: "Virtual AI Coach - Personalized Video Workout Training",
+  description: "Your personal virtual sports coach with guided video workouts. Generate customized training sessions adapted to your fitness level, with real-time timers, exercise variety, and advanced customization options. No equipment needed.",
+  keywords: "virtual coach, workout videos, personalized training, fitness app, home workout, guided exercises, interval training, cardio, strength training, flexibility",
+  authors: [{ name: "Virtual AI Coach" }],
+  openGraph: {
+    title: "Virtual AI Coach - Personalized Video Workout Training",
+    description: "Generate customized video workouts with guided exercises, timers, and personalized intensity levels. Train anywhere, anytime.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Virtual AI Coach - Personalized Video Workout Training",
+    description: "Your personal virtual sports coach with guided video workouts and customized training sessions.",
+  },
 };
 
 export default function RootLayout({

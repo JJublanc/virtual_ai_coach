@@ -17,17 +17,18 @@ interface UseComingSoonModalReturn {
   closeModal: () => void
 }
 
-// Descriptions par défaut pour chaque fonctionnalité
+// Default descriptions for each feature
 const defaultDescriptions: Record<FeatureName, string> = {
-  Dashboard: "Visualiser vos statistiques d'entraînement, suivre vos progrès au fil du temps, et consulter vos performances détaillées avec des graphiques interactifs.",
-  Profile: "Gérer votre profil utilisateur, personnaliser vos préférences d'entraînement, définir vos objectifs personnels et suivre votre évolution.",
-  Goals: "Définir des objectifs SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporels) et recevoir des recommandations d'entraînement adaptées pour les atteindre.",
-  Plan: "Créer et gérer des programmes d'entraînement hebdomadaires personnalisés avec planification automatique basée sur vos disponibilités.",
-  'Advanced Intervals': "Configurer des intervalles d'entraînement complexes avec des variations de temps de travail et de repos pour chaque exercice, incluant des progressions automatiques.",
-  'Custom Intensity': "Ajuster finement l'intensité de chaque exercice individuellement, avec des recommandations basées sur votre niveau de forme physique et vos objectifs.",
-  'Advanced Warmup': "Personnaliser votre échauffement avec des routines spécifiques selon le type d'entraînement prévu, incluant mobilité articulaire et activation musculaire ciblée.",
-  'AI Assistant': "Bénéficier d'un assistant personnel intelligent qui comprend vos objectifs, analyse vos sensations et génère des séances d'entraînement parfaitement adaptées à votre état du moment.",
-  'Select Exercises': "Créer votre propre sélection d'exercices favoris, exclure certains mouvements, et construire des bibliothèques personnalisées pour vos entraînements.",
+  Dashboard: "Visualize your training statistics, track your progress over time, and view your detailed performance with interactive charts.",
+  Profile: "Manage your user profile, customize your training preferences, set your personal goals, and track your evolution.",
+  Goals: "Define SMART goals (Specific, Measurable, Achievable, Realistic, Time-bound) and receive tailored training recommendations to achieve them.",
+  Plan: "Create and manage personalized weekly training programs with automatic scheduling based on your availability.",
+  'Advanced Intervals': "Configure complex training intervals with variations in work and rest times for each exercise, including automatic progressions.",
+  'Custom Intensity': "Fine-tune the intensity of each exercise individually, with recommendations based on your fitness level and goals.",
+  'Advanced Warmup': "Customize your warm-up with specific routines according to the planned training type, including joint mobility and targeted muscle activation.",
+  'AI Assistant': "Benefit from an intelligent personal assistant that understands your goals, analyzes your feelings, and generates training sessions perfectly adapted to your current state.",
+  'Select Exercises': "Create your own selection of favorite exercises, exclude certain movements, and build personalized libraries for your workouts.",
+  'Exercise Filters': "Customize exercise filters to exclude repeated movements, jumping exercises, and adapt your training to your preferences and physical constraints.",
 }
 
 export function useComingSoonModal(): UseComingSoonModalReturn {
