@@ -21,11 +21,11 @@ switch (environment) {
   case 'local':
   case 'dev':
     // Migration vers projet dev cloud (utilise --linked au lieu de --project-ref)
-    const devId = process.env.SUPABASE_DEV_PROJECT_ID;
+    const devId = process.env.SUPABASE_PROJECT_ID;
     if (!devId) {
-      console.error('❌ SUPABASE_DEV_PROJECT_ID not set in .env');
+      console.error('❌ SUPABASE_PROJECT_ID not set in .env');
       console.log('📝 Add this to backend/.env:');
-      console.log('   SUPABASE_DEV_PROJECT_ID=your-dev-ref-id');
+      console.log('   SUPABASE_PROJECT_ID=your-dev-ref-id');
       console.log('\n⚠️  Also run: supabase link --project-ref your-dev-ref-id');
       process.exit(1);
     }
