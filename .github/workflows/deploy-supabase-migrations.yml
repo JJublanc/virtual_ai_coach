@@ -1,13 +1,16 @@
 name: Deploy Supabase Migrations
 
 on:
-  push:
-    branches: [prod]
-    paths: ['backend/supabase/migrations/**']
-  workflow_dispatch:
+  pull_request:
+      types: [closed]
+      branches:
+        - prod
+      paths:
+        - 'backend/supabase/migrations/**'
 
 jobs:
   deploy-production:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment: production
 
