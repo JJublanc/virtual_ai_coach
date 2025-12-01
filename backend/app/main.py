@@ -26,6 +26,7 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",  # Alternative localhost
     "https://virtual-ai-coach.vercel.app",
     "https://virtual-ai-coach-git-dev-johans-projects-1eb56e49.vercel.app",
+    "https://tyswee.com",
 ]
 
 # Ajouter les domaines Vercel preview si configurés (séparés par des virgules)
