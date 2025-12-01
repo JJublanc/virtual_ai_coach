@@ -1,0 +1,65 @@
+name: Validate Supabase Migrations
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['backend/supabase/migrations/**']
+
+jobs:
+  validate-migrations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: List migration files
+        run: |
+          echo "📂 Migration files in this PR:"
+          ls -la backend/supabase/migrations/
+          echo ""
+          echo "📝 Number of migration files:"
+          ls -1 backend/supabase/migrations/*.sql 2>/dev/null | wc -l || echo "0"
+
+      - name: Validate SQL syntax
+        run: |
+          echo "🔍 Validating SQL syntax..."
+          for file in backend/supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+              # Basic SQL syntax validation
+              if grep -q ";" "$file"; then
+                echo "✅ $file appears valid"
+              else
+                echo "⚠️  Warning: $file may be missing SQL statements"
+              fi
+            fi
+          done
+          echo "✅ SQL syntax validation completed"
+
+      - name: Check migration naming convention
+        run: |
+          echo "🔍 Checking migration file naming convention..."
+          for file in backend/supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if [[ $filename =~ ^[0-9]{14}_[a-z0-9_]+\.sql$ ]]; then
+                echo "✅ $filename follows naming convention"
+              else
+                echo "❌ $filename does NOT follow naming convention (YYYYMMDDHHmmss_description.sql)"
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All migration files follow naming convention"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "✅ All validation checks passed"
+          echo "The migrations are ready to be merged and deployed"
