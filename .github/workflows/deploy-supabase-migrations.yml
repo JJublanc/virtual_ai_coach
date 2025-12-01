@@ -2,17 +2,18 @@ name: Deploy Supabase Migrations
 
 on:
   pull_request:
-      types: [closed]
-      branches:
-        - prod
-      paths:
-        - 'backend/supabase/migrations/**'
+    types: [closed]
+    branches:
+      - prod
+    paths:
+      - 'backend/supabase/migrations/**'
+  workflow_dispatch:  # Permet le déclenchement manuel pour tests
 
 jobs:
   deploy-production:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # Nécessite approbation manuelle
 
     steps:
       - name: Checkout code
@@ -29,20 +30,30 @@ jobs:
           ls -la backend/supabase/migrations/
           echo "✅ Migration files verified"
 
-      - name: Deploy to Production
+      - name: Link to production project
+        working-directory: backend
         run: |
-          cd backend
+          echo "🔗 Linking to production project..."
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Deploy migrations to production
+        working-directory: backend
+        run: |
           echo "🚀 Deploying migrations to production..."
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }}
+          supabase db push
           echo "✅ Migrations deployed successfully"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Notify success
         if: success()
         run: |
           echo "✅ Production database migrations completed successfully"
-          echo "Project: ${{ secrets.SUPABASE_PROD_PROJECT_ID }}"
+          echo "Project: ${{ secrets.SUPABASE_PROJECT_ID }}"
           echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
 
       - name: Notify failure
@@ -50,4 +61,3 @@ jobs:
         run: |
           echo "❌ Production database migration failed"
           echo "Please check the logs and verify the migration files"
-          exit 1

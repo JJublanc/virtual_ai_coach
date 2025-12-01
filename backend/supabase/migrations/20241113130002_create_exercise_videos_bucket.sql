@@ -1,6 +1,6 @@
 -- Migration: Création du bucket Supabase Storage pour les vidéos d'exercices
 
--- Créer le bucket de exercise-videos avec une limite de 200MB
+-- Créer le bucket de exercise-videos avec limite de 200MB
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'exercise-videos',
