@@ -2,7 +2,7 @@ name: Deploy Supabase Migrations
 
 on:
   push:
-    branches: [main]
+    branches: [prod]
     paths: ['backend/supabase/migrations/**']
   workflow_dispatch:
 
