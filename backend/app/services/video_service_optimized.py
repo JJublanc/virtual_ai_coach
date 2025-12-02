@@ -494,7 +494,7 @@ class OptimizedVideoService(VideoService):
             Dict mapping nom exercice -> chemin local
         """
         logger.info(
-            f"=== TÉLÉCHARGEMENT PARALLÈLE ({self.max_parallel_downloads} threads) ==="
+            f"=== DÉBUT TÉLÉCHARGEMENT PARALLÈLE: {len(exercises)} exercices ({self.max_parallel_downloads} threads) ==="
         )
         start_time = time.time()
 
@@ -502,23 +502,33 @@ class OptimizedVideoService(VideoService):
 
         def download_single(exercise: Exercise) -> Tuple[str, Optional[Path]]:
             """Télécharge une seule vidéo"""
+            download_start = time.time()
+            logger.info(f"⏱️ Début résolution: {exercise.name}")
             path = self._resolve_video_path(exercise)
+            download_time = (time.time() - download_start) * 1000
+            logger.info(f"⏱️ Fin résolution: {exercise.name} en {download_time:.0f}ms")
             return (exercise.name, path)
 
         with ThreadPoolExecutor(max_workers=self.max_parallel_downloads) as executor:
             futures = {executor.submit(download_single, ex): ex for ex in exercises}
 
+            completed_count = 0
             for future in as_completed(futures):
                 exercise = futures[future]
                 try:
                     name, path = future.result()
                     results[name] = path
+                    completed_count += 1
 
                     if path and path.exists():
                         size_kb = path.stat().st_size / 1024
-                        logger.info(f"✓ {name}: {size_kb:.1f}KB")
+                        logger.info(
+                            f"✓ [{completed_count}/{len(exercises)}] {name}: {size_kb:.1f}KB"
+                        )
                     else:
-                        logger.error(f"✗ {name}: téléchargement échoué")
+                        logger.error(
+                            f"✗ [{completed_count}/{len(exercises)}] {name}: téléchargement échoué"
+                        )
 
                 except Exception as e:
                     logger.error(f"✗ {exercise.name}: erreur - {e}")
@@ -527,8 +537,8 @@ class OptimizedVideoService(VideoService):
         total_time = (time.time() - start_time) * 1000
         success_count = sum(1 for p in results.values() if p is not None)
         logger.info(
-            f"⏱️ Téléchargement terminé: {success_count}/{len(exercises)} "
-            f"en {total_time:.0f}ms"
+            f"⏱️ TÉLÉCHARGEMENT PARALLÈLE TERMINÉ: {success_count}/{len(exercises)} "
+            f"en {total_time:.0f}ms ({total_time/1000:.1f}s)"
         )
 
         return results
