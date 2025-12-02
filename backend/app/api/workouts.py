@@ -1056,9 +1056,13 @@ def build_optimized_ffmpeg_command(workout_data):
     import os
     from pathlib import Path
 
+    logger.info("🔧 DÉBUT build_optimized_ffmpeg_command")
+
     # Récupérer les exercices depuis workout_data (dictionnaire)
     exercises = workout_data.get("exercises", [])
     config = workout_data.get("config", None)
+
+    logger.info(f"🔧 Exercices récupérés: {len(exercises)} exercices")
 
     if not exercises or not config:
         raise HTTPException(500, "Données de workout incomplètes")
@@ -1072,7 +1076,13 @@ def build_optimized_ffmpeg_command(workout_data):
     concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
     # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+    logger.info(
+        f"🚀 AVANT APPEL _download_videos_parallel avec {len(exercises)} exercices"
+    )
     video_map = video_service._download_videos_parallel(exercises)
+    logger.info(
+        f"✅ APRÈS APPEL _download_videos_parallel, {len(video_map)} vidéos dans le map"
+    )
 
     video_paths = []
     for exercise in exercises:
