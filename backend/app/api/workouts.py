@@ -343,9 +343,12 @@ async def generate_workout_video(request: GenerateVideoRequest):
 
         concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
+        # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+        video_map = video_service._download_videos_parallel(selected_exercises)
+
         video_paths = []
         for exercise in selected_exercises:
-            video_path = video_service._resolve_video_path(exercise)
+            video_path = video_map.get(exercise.name)
             if video_path and video_path.exists():
                 video_paths.append(video_path)
                 logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
@@ -545,9 +548,12 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
         # Vérifier et préparer les chemins vidéo
+        # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+        video_map = video_service._download_videos_parallel(selected_exercises)
+
         video_paths = []
         for exercise in selected_exercises:
-            video_path = video_service._resolve_video_path(exercise)
+            video_path = video_map.get(exercise.name)
             if video_path and video_path.exists():
                 video_paths.append(video_path)
                 logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
@@ -1065,9 +1071,12 @@ def build_optimized_ffmpeg_command(workout_data):
     temp_dir = Path(tempfile.gettempdir())
     concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
+    # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+    video_map = video_service._download_videos_parallel(exercises)
+
     video_paths = []
     for exercise in exercises:
-        video_path = video_service._resolve_video_path(exercise)
+        video_path = video_map.get(exercise.name)
         if video_path and video_path.exists():
             video_paths.append(video_path)
             logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")

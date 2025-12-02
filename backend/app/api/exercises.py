@@ -24,6 +24,17 @@ router = APIRouter(prefix="/api", tags=["exercises"])
 # Configuration Supabase avec logs de debug détaillés
 logger.info("=== DIAGNOSTIC VARIABLES D'ENVIRONNEMENT SUPABASE ===")
 
+# Afficher TOUTES les variables d'environnement disponibles (pour debug)
+logger.info("=== TOUTES LES VARIABLES D'ENVIRONNEMENT ===")
+all_env_vars = dict(os.environ)
+logger.info(f"Nombre total de variables: {len(all_env_vars)}")
+for key in sorted(all_env_vars.keys()):
+    if "KEY" in key or "PASSWORD" in key or "SECRET" in key:
+        logger.info(f"{key} = [MASQUÉ]")
+    else:
+        logger.info(f"{key} = {all_env_vars[key][:100]}")
+
+logger.info("=== VARIABLES SUPABASE SPÉCIFIQUES ===")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 logger.info(f"SUPABASE_URL : {SUPABASE_URL}")
 logger.info(f"SUPABASE_URL type: {type(SUPABASE_URL)}")
@@ -36,18 +47,19 @@ logger.info(
 )
 
 # Lister TOUTES les variables d'environnement qui commencent par SUPABASE
-logger.info("=== TOUTES LES VARIABLES SUPABASE DISPONIBLES ===")
+logger.info("=== RECHERCHE DE TOUTES LES VARIABLES SUPABASE* ===")
 supabase_vars = {
-    key: value for key, value in os.environ.items() if key.startswith("SUPABASE")
+    key: value for key, value in os.environ.items() if "SUPABASE" in key.upper()
 }
+logger.info(f"Variables trouvées avec 'SUPABASE' dans le nom: {len(supabase_vars)}")
 for key, value in supabase_vars.items():
     # Masquer les clés sensibles mais montrer leur longueur
     if "KEY" in key or "PASSWORD" in key:
-        logger.info(f"{key} = {'*' * min(20, len(value))}... (length: {len(value)})")
+        logger.info(f"  {key} = [MASQUÉ] (length: {len(value)})")
     else:
-        logger.info(f"{key} = {value}")
+        logger.info(f"  {key} = {value}")
 
-logger.info(f"=== TOTAL: {len(supabase_vars)} variables SUPABASE trouvées ===")
+logger.info("=== FIN DIAGNOSTIC ===")
 
 # Flag pour basculer entre JSON local et Supabase
 USE_SUPABASE = True  # os.getenv("USE_SUPABASE", "false").lower() == "true"
