@@ -39,6 +39,21 @@ router = APIRouter(prefix="/api", tags=["workouts"])
 # Timeout maximum pour la génération vidéo (5 minutes)
 GENERATION_TIMEOUT = 300  # secondes
 
+# Instance globale du service vidéo optimisé (évite la réinitialisation coûteuse)
+_video_service_instance = None
+
+
+def get_video_service() -> OptimizedVideoService:
+    """Retourne l'instance globale du service vidéo (singleton pattern)"""
+    global _video_service_instance
+    if _video_service_instance is None:
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent.parent
+        _video_service_instance = OptimizedVideoService(project_root=project_root)
+        logger.info("✅ Instance globale OptimizedVideoService créée")
+    return _video_service_instance
+
 
 class GenerateVideoRequest(BaseModel):
     """Requête pour générer une vidéo d'entraînement"""
@@ -326,10 +341,8 @@ async def generate_workout_video(request: GenerateVideoRequest):
             )
 
         # 3. Initialiser le service vidéo optimisé
-        project_root = Path(
-            __file__
-        ).parent.parent.parent.parent  # Remonter à la racine du projet
-        video_service = OptimizedVideoService(project_root=project_root)
+        # Utiliser l'instance globale du service vidéo optimisé
+        video_service = get_video_service()
 
         # 4. Construire la commande FFmpeg pour le streaming
         # Note: On va utiliser stdout pour le streaming, donc on utilise 'pipe:1'
@@ -343,9 +356,12 @@ async def generate_workout_video(request: GenerateVideoRequest):
 
         concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
+        # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+        video_map = video_service._download_videos_parallel(selected_exercises)
+
         video_paths = []
         for exercise in selected_exercises:
-            video_path = video_service._resolve_video_path(exercise)
+            video_path = video_map.get(exercise.name)
             if video_path and video_path.exists():
                 video_paths.append(video_path)
                 logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
@@ -531,8 +547,8 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         logger.info(f"{len(selected_exercises)} exercices chargés pour la vidéo")
 
         # 4. Initialiser le service vidéo optimisé
-        project_root = Path(__file__).parent.parent.parent.parent
-        video_service = OptimizedVideoService(project_root=project_root)
+        # Utiliser l'instance globale du service vidéo optimisé
+        video_service = get_video_service()
 
         # 5. Préparer la commande FFmpeg pour le streaming
         speed = video_service.get_speed_multiplier(request.config.intensity)
@@ -545,9 +561,12 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
         # Vérifier et préparer les chemins vidéo
+        # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+        video_map = video_service._download_videos_parallel(selected_exercises)
+
         video_paths = []
         for exercise in selected_exercises:
-            video_path = video_service._resolve_video_path(exercise)
+            video_path = video_map.get(exercise.name)
             if video_path and video_path.exists():
                 video_paths.append(video_path)
                 logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")
@@ -1050,24 +1069,36 @@ def build_optimized_ffmpeg_command(workout_data):
     import os
     from pathlib import Path
 
+    logger.info("🔧 DÉBUT build_optimized_ffmpeg_command")
+
     # Récupérer les exercices depuis workout_data (dictionnaire)
     exercises = workout_data.get("exercises", [])
     config = workout_data.get("config", None)
 
+    logger.info(f"🔧 Exercices récupérés: {len(exercises)} exercices")
+
     if not exercises or not config:
         raise HTTPException(500, "Données de workout incomplètes")
 
-    # Utiliser le service vidéo optimisé
-    project_root = Path(__file__).parent.parent.parent
-    video_service = OptimizedVideoService(project_root=project_root)
+    # Utiliser l'instance globale du service vidéo optimisé (évite réinitialisation)
+    video_service = get_video_service()
 
     # Préparer les chemins des vidéos et créer le fichier de concat
     temp_dir = Path(tempfile.gettempdir())
     concat_file = temp_dir / f"concat_{os.getpid()}.txt"
 
+    # Utiliser le téléchargement parallèle optimisé au lieu de la boucle séquentielle
+    logger.info(
+        f"🚀 AVANT APPEL _download_videos_parallel avec {len(exercises)} exercices"
+    )
+    video_map = video_service._download_videos_parallel(exercises)
+    logger.info(
+        f"✅ APRÈS APPEL _download_videos_parallel, {len(video_map)} vidéos dans le map"
+    )
+
     video_paths = []
     for exercise in exercises:
-        video_path = video_service._resolve_video_path(exercise)
+        video_path = video_map.get(exercise.name)
         if video_path and video_path.exists():
             video_paths.append(video_path)
             logger.debug(f"Vidéo trouvée: {exercise.name} -> {video_path}")

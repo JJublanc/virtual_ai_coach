@@ -62,9 +62,6 @@ class OptimizedVideoService(VideoService):
     - Nettoyage progressif de la mémoire
     """
 
-    # Durées de break communes à pré-générer
-    COMMON_BREAK_DURATIONS = [5, 10, 15, 20, 25, 30, 35, 40]
-
     # Format cible pour la normalisation
     TARGET_FORMAT = {
         "width": 1280,
@@ -95,103 +92,47 @@ class OptimizedVideoService(VideoService):
 
         self.max_parallel_downloads = max_parallel_downloads
 
-        # Cache des breaks pré-générés par durée
-        self.break_cache_dir = self.video_cache_dir / "breaks_cache"
-        self.break_cache_dir.mkdir(parents=True, exist_ok=True)
-
-        # Pré-générer les breaks pour les durées communes
-        self._ensure_break_cache()
-
         logger.info(
             f"OptimizedVideoService initialisé avec "
-            f"max_parallel_downloads={max_parallel_downloads}, "
-            f"break_cache_dir={self.break_cache_dir}"
+            f"max_parallel_downloads={max_parallel_downloads}"
         )
-
-    def _ensure_break_cache(self) -> None:
-        """
-        Pré-génère les vidéos de break pour toutes les durées communes
-        Utilise un cache persistant pour éviter la régénération
-        Vérifie que les breaks sont au bon format (720p)
-        """
-        logger.info("=== INITIALISATION CACHE DES BREAKS ===")
-
-        for duration in self.COMMON_BREAK_DURATIONS:
-            break_path = self._get_cached_break_path(duration)
-
-            needs_regeneration = False
-
-            if break_path.exists():
-                # Vérifier que le break est au bon format (720p)
-                video_format = self.detect_video_format(break_path)
-                if video_format:
-                    if (
-                        video_format.width == self.TARGET_FORMAT["width"]
-                        and video_format.height == self.TARGET_FORMAT["height"]
-                    ):
-                        file_size = break_path.stat().st_size
-                        logger.info(
-                            f"✓ Break {duration}s en cache (720p): {file_size/1024:.1f}KB"
-                        )
-                    else:
-                        logger.warning(
-                            f"⚠️ Break {duration}s au mauvais format "
-                            f"({video_format.width}x{video_format.height}), régénération..."
-                        )
-                        break_path.unlink()  # Supprimer l'ancien break
-                        needs_regeneration = True
-                else:
-                    logger.warning(
-                        f"⚠️ Impossible de vérifier le format du break {duration}s, régénération..."
-                    )
-                    break_path.unlink()
-                    needs_regeneration = True
-            else:
-                needs_regeneration = True
-
-            if needs_regeneration:
-                logger.info(f"⏳ Génération break {duration}s @ 720p...")
-                start_time = time.time()
-
-                if self.generate_break_video(duration, break_path):
-                    generation_time = (time.time() - start_time) * 1000
-                    file_size = break_path.stat().st_size
-                    logger.info(
-                        f"✓ Break {duration}s généré en {generation_time:.0f}ms "
-                        f"({file_size/1024:.1f}KB) @ 720p"
-                    )
-                else:
-                    logger.error(f"✗ Échec génération break {duration}s")
-
-    def _get_cached_break_path(self, duration: int) -> Path:
-        """Retourne le chemin du break en cache pour une durée donnée"""
-        return self.break_cache_dir / f"break_{duration}s.mp4"
+        logger.info("✅ Les vidéos de break seront téléchargées depuis Supabase")
 
     def _get_or_create_break(self, duration: int, temp_dir: Path) -> Optional[Path]:
         """
-        Obtient une vidéo de break, depuis le cache ou en la générant
+        Obtient une vidéo de break depuis Supabase (téléchargement avec cache)
 
         Args:
             duration: Durée du break en secondes
-            temp_dir: Répertoire temporaire pour les breaks non-standards
+            temp_dir: Répertoire temporaire (non utilisé, gardé pour compatibilité)
 
         Returns:
-            Chemin vers la vidéo de break ou None si erreur
+            Chemin vers la vidéo de break téléchargée ou None si erreur
         """
-        # Vérifier d'abord le cache des durées communes
-        cached_path = self._get_cached_break_path(duration)
-        if cached_path.exists():
-            logger.debug(f"Break {duration}s trouvé en cache")
-            return cached_path
+        from ..config.break_videos import get_break_video_url
 
-        # Si pas en cache, générer dans le répertoire temporaire
-        logger.info(f"Break {duration}s non en cache, génération...")
-        temp_break_path = temp_dir / f"break_{duration}s_{os.getpid()}.mp4"
+        try:
+            # Récupérer l'URL Supabase pour cette durée
+            break_url = get_break_video_url(duration)
 
-        if self.generate_break_video(duration, temp_break_path):
-            return temp_break_path
+            # Utiliser le système de téléchargement existant (avec cache automatique)
+            break_path = self._download_video_from_supabase(
+                break_url, f"break_{duration}s"
+            )
 
-        return None
+            if break_path and break_path.exists():
+                logger.debug(f"Break {duration}s téléchargé depuis Supabase")
+                return break_path
+            else:
+                logger.error(f"Échec téléchargement break {duration}s depuis Supabase")
+                return None
+
+        except ValueError as e:
+            logger.error(f"Durée de break {duration}s non supportée: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Erreur lors du téléchargement du break {duration}s: {e}")
+            return None
 
     def generate_break_video(self, duration: int, output_path: Path) -> bool:
         """
@@ -494,7 +435,7 @@ class OptimizedVideoService(VideoService):
             Dict mapping nom exercice -> chemin local
         """
         logger.info(
-            f"=== TÉLÉCHARGEMENT PARALLÈLE ({self.max_parallel_downloads} threads) ==="
+            f"=== DÉBUT TÉLÉCHARGEMENT PARALLÈLE: {len(exercises)} exercices ({self.max_parallel_downloads} threads) ==="
         )
         start_time = time.time()
 
@@ -502,23 +443,33 @@ class OptimizedVideoService(VideoService):
 
         def download_single(exercise: Exercise) -> Tuple[str, Optional[Path]]:
             """Télécharge une seule vidéo"""
+            download_start = time.time()
+            logger.info(f"⏱️ Début résolution: {exercise.name}")
             path = self._resolve_video_path(exercise)
+            download_time = (time.time() - download_start) * 1000
+            logger.info(f"⏱️ Fin résolution: {exercise.name} en {download_time:.0f}ms")
             return (exercise.name, path)
 
         with ThreadPoolExecutor(max_workers=self.max_parallel_downloads) as executor:
             futures = {executor.submit(download_single, ex): ex for ex in exercises}
 
+            completed_count = 0
             for future in as_completed(futures):
                 exercise = futures[future]
                 try:
                     name, path = future.result()
                     results[name] = path
+                    completed_count += 1
 
                     if path and path.exists():
                         size_kb = path.stat().st_size / 1024
-                        logger.info(f"✓ {name}: {size_kb:.1f}KB")
+                        logger.info(
+                            f"✓ [{completed_count}/{len(exercises)}] {name}: {size_kb:.1f}KB"
+                        )
                     else:
-                        logger.error(f"✗ {name}: téléchargement échoué")
+                        logger.error(
+                            f"✗ [{completed_count}/{len(exercises)}] {name}: téléchargement échoué"
+                        )
 
                 except Exception as e:
                     logger.error(f"✗ {exercise.name}: erreur - {e}")
@@ -527,8 +478,8 @@ class OptimizedVideoService(VideoService):
         total_time = (time.time() - start_time) * 1000
         success_count = sum(1 for p in results.values() if p is not None)
         logger.info(
-            f"⏱️ Téléchargement terminé: {success_count}/{len(exercises)} "
-            f"en {total_time:.0f}ms"
+            f"⏱️ TÉLÉCHARGEMENT PARALLÈLE TERMINÉ: {success_count}/{len(exercises)} "
+            f"en {total_time:.0f}ms ({total_time/1000:.1f}s)"
         )
 
         return results
