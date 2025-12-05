@@ -29,7 +29,7 @@ def _build_break_video_urls() -> dict:
     """Construit les URLs des vidéos de break depuis Supabase"""
     project_id = _get_supabase_project_id()
     base_url = f"https://{project_id}.supabase.co/storage/v1/object/public/exercise-videos/breaks"
-    
+
     return {
         5: f"{base_url}/break_5s.mp4",
         10: f"{base_url}/break_10s.mp4",
@@ -49,13 +49,13 @@ BREAK_VIDEO_URLS = _build_break_video_urls()
 def get_break_video_url(duration: int) -> str:
     """
     Retourne l'URL Supabase de la vidéo de break pour une durée donnée.
-    
+
     Args:
         duration: Durée du break en secondes
-        
+
     Returns:
         URL de la vidéo de break sur Supabase
-        
+
     Raises:
         ValueError: Si la durée n'est pas supportée
     """
@@ -64,5 +64,5 @@ def get_break_video_url(duration: int) -> str:
             f"Durée de break {duration}s non supportée. "
             f"Durées disponibles: {list(BREAK_VIDEO_URLS.keys())}"
         )
-    
+
     return BREAK_VIDEO_URLS[duration]

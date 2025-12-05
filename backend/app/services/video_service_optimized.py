@@ -98,7 +98,6 @@ class OptimizedVideoService(VideoService):
         )
         logger.info("✅ Les vidéos de break seront téléchargées depuis Supabase")
 
-
     def _get_or_create_break(self, duration: int, temp_dir: Path) -> Optional[Path]:
         """
         Obtient une vidéo de break depuis Supabase (téléchargement avec cache)
@@ -111,21 +110,23 @@ class OptimizedVideoService(VideoService):
             Chemin vers la vidéo de break téléchargée ou None si erreur
         """
         from ..config.break_videos import get_break_video_url
-        
+
         try:
             # Récupérer l'URL Supabase pour cette durée
             break_url = get_break_video_url(duration)
-            
+
             # Utiliser le système de téléchargement existant (avec cache automatique)
-            break_path = self._download_video_from_supabase(break_url, f"break_{duration}s")
-            
+            break_path = self._download_video_from_supabase(
+                break_url, f"break_{duration}s"
+            )
+
             if break_path and break_path.exists():
                 logger.debug(f"Break {duration}s téléchargé depuis Supabase")
                 return break_path
             else:
                 logger.error(f"Échec téléchargement break {duration}s depuis Supabase")
                 return None
-                
+
         except ValueError as e:
             logger.error(f"Durée de break {duration}s non supportée: {e}")
             return None
