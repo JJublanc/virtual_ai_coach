@@ -1,26 +1,10 @@
 [
     {
-        "id": "bbc66053-12ec-4b7e-937a-276761ccbfc1",
-        "name": "Push-ups",
-        "description": "Placez-vous en position de planche, mains écartées largeur d'épaules. Gardez le corps aligné, descendez jusqu'à ce que la poitrine touche presque le sol, puis remontez en poussant sur les bras.",
-        "icon": "💪",
-        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/push_ups.mov",
-        "default_duration": 60,
-        "difficulty": "medium",
-        "has_jump": false,
-        "access_tier": "free",
-        "metadata": {
-            "muscles_targeted": ["chest", "triceps", "shoulders"],
-            "equipment_needed": [],
-            "calories_per_min": 7.0
-        }
-    },
-    {
-        "id": "a1b2c3d4-5e6f-7890-abcd-ef1234567890",
-        "name": "Air Squat",
-        "description": "Debout, pieds écartés largeur d'épaules, pointes légèrement vers l'extérieur. Descendez en poussant les hanches vers l'arrière comme pour vous asseoir, gardez le dos droit et remontez en poussant sur les talons.",
+        "id": "a1f2e3d4-5b6c-7d8e-9f0a-1b2c3d4e5f6a",
+        "name": "Modified Air Squat",
+        "description": "Stand with feet shoulder-width apart. Lower into a squat keeping your back straight and knees aligned with your toes. Modified variant for easier execution.",
         "icon": "🦵",
-        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/air_squat.mov",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/air_squate_modified.mov",
         "default_duration": 60,
         "difficulty": "easy",
         "has_jump": false,
@@ -28,23 +12,151 @@
         "metadata": {
             "muscles_targeted": ["quadriceps", "glutes", "core"],
             "equipment_needed": [],
-            "calories_per_min": 6.5
+            "calories_per_min": 6.0
         }
     },
     {
-        "id": "f9e8d7c6-b5a4-3210-9876-543210fedcba",
-        "name": "Quick Feet Half Burpee",
-        "description": "Position debout, effectuez des petits pas rapides sur place puis descendez en position de planche. Remontez rapidement en position debout. Mouvement explosif et cardio.",
-        "icon": "🏋️",
-        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/quick_feet_half_burpees.mov",
+        "id": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+        "name": "Backward Lunges",
+        "description": "Stand with feet together. Step one leg back while bending both knees to 90 degrees. The back knee lowers toward the ground without touching it. Return to start and alternate legs.",
+        "icon": "🦿",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/backward_lunges.mov",
         "default_duration": 60,
         "difficulty": "medium",
         "has_jump": false,
         "access_tier": "free",
         "metadata": {
-            "muscles_targeted": ["core", "shoulders"],
+            "muscles_targeted": ["quadriceps", "glutes", "hamstrings", "core"],
             "equipment_needed": [],
-            "calories_per_min": 5.0
+            "calories_per_min": 7.0
+        }
+    },
+    {
+        "id": "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
+        "name": "Commandos",
+        "description": "Start in a forearm plank position. Push up onto your hands one at a time to reach a high plank, then lower back down to forearms. Alternate the starting arm.",
+        "icon": "💪",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/commandos.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["core", "shoulders", "triceps", "chest"],
+            "equipment_needed": [],
+            "calories_per_min": 8.5
+        }
+    },
+    {
+        "id": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+        "name": "High Knees",
+        "description": "Stand and run in place, bringing your knees up as high as possible, ideally to hip height. Maintain a fast pace with arms moving in a running motion.",
+        "icon": "🏃",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/high_knees.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["quadriceps", "hip_flexors", "core", "calves"],
+            "equipment_needed": [],
+            "calories_per_min": 9.0
+        }
+    },
+    {
+        "id": "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
+        "name": "Leg Raises",
+        "description": "Lie on your back with hands under your glutes or by your sides. Keep legs straight and raise them to vertical, then lower slowly without touching the ground. Keep lower back pressed to the floor.",
+        "icon": "🦵",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/legs_raises.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["lower_abs", "hip_flexors", "core"],
+            "equipment_needed": [],
+            "calories_per_min": 5.5
+        }
+    },
+    {
+        "id": "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
+        "name": "Mountain Climbers",
+        "description": "In high plank position, alternately bring knees toward chest while keeping hips low. Fast, dynamic movement as if running in plank position.",
+        "icon": "🏔️",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/mountain_climber.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["core", "shoulders", "hip_flexors", "quadriceps"],
+            "equipment_needed": [],
+            "calories_per_min": 8.0
+        }
+    },
+    {
+        "id": "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
+        "name": "Plank",
+        "description": "Hold a plank position on forearms and toes. Body aligned from head to feet, abs engaged, glutes tight. Maintain position without letting hips sag or rise.",
+        "icon": "🧘",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/plank.mov",
+        "default_duration": 60,
+        "difficulty": "easy",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["core", "shoulders", "glutes"],
+            "equipment_needed": [],
+            "calories_per_min": 4.0
+        }
+    },
+    {
+        "id": "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e",
+        "name": "Modified Squat 2",
+        "description": "Squat variation with modified position or range of motion to adapt the exercise. Keep back straight, lower with control and push through heels to rise.",
+        "icon": "🦵",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/squate_modified_2.mov",
+        "default_duration": 60,
+        "difficulty": "easy",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["quadriceps", "glutes", "core"],
+            "equipment_needed": [],
+            "calories_per_min": 6.0
+        }
+    },
+    {
+        "id": "c9d0e1f2-3a4b-5c6d-7e8f-9a0b1c2d3e4f",
+        "name": "Sumo Squat",
+        "description": "Feet wider than shoulder-width, toes pointed outward. Lower into squat keeping back straight and knees aligned with toes. Targets inner thighs more.",
+        "icon": "🦵",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/steam_squate.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["quadriceps", "glutes", "adductors", "core"],
+            "equipment_needed": [],
+            "calories_per_min": 6.5
+        }
+    },
+    {
+        "id": "d0e1f2a3-4b5c-6d7e-8f9a-0b1c2d3e4f5a",
+        "name": "Superman Burpees",
+        "description": "Classic burpee with a variation: in the low position on the ground, extend arms forward in superman position before coming back up. Complete explosive movement combining cardio and strength.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/superman_burpees.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": ["full_body", "core", "shoulders", "legs", "back"],
+            "equipment_needed": [],
+            "calories_per_min": 10.0
         }
     }
 ]
