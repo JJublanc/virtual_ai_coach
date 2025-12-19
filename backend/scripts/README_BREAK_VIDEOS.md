@@ -10,7 +10,7 @@ Ce guide explique comment générer et uploader les vidéos de break vers Supaba
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # ⚠️ Pas l'anon key !
    SUPABASE_PROJECT_ID=your-project-id
    ```
-   
+
    **Important :** Utilisez la **`service_role_key`** (pas l'anon key) pour uploader des fichiers.
    Vous la trouverez dans : Supabase Dashboard → Settings → API → `service_role` key
 
