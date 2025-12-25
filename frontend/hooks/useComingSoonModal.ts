@@ -23,6 +23,7 @@ const defaultDescriptions: Record<FeatureName, string> = {
   Profile: "Manage your user profile, customize your training preferences, set your personal goals, and track your evolution.",
   Goals: "Define SMART goals (Specific, Measurable, Achievable, Realistic, Time-bound) and receive tailored training recommendations to achieve them.",
   Plan: "Create and manage personalized weekly training programs with automatic scheduling based on your availability.",
+  'Quick Setup': "Quickly customize your training intensity with predefined levels (Low Impact, Medium Intensity, High Intensity) to match your current fitness level and daily energy.",
   'Advanced Intervals': "Configure complex training intervals with variations in work and rest times for each exercise, including automatic progressions.",
   'Custom Intensity': "Fine-tune the intensity of each exercise individually, with recommendations based on your fitness level and goals.",
   'Advanced Warmup': "Customize your warm-up with specific routines according to the planned training type, including joint mobility and targeted muscle activation.",
