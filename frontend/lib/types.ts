@@ -103,6 +103,7 @@ export type FeatureName =
   | 'Profile'
   | 'Goals'
   | 'Plan'
+  | 'Quick Setup'
   | 'Advanced Intervals'
   | 'Custom Intensity'
   | 'Advanced Warmup'

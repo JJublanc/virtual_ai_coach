@@ -4,20 +4,97 @@ import Image from "next/image"
 import Link from "next/link"
 import { Play, Zap, Target, Clock, Dumbbell, TrendingUp } from "lucide-react"
 
+// FAQ Schema.org structured data for SEO
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is Virtual AI Coach really free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! Virtual AI Coach is completely free to start. Generate personalized workout programs with our AI-powered fitness app at no cost. No credit card required, no hidden fees."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need equipment for the workouts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No equipment needed! All workouts use bodyweight exercises that you can do anywhere, anytime. Perfect for home workout enthusiasts or those new to fitness training."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What fitness levels does this AI personal trainer support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Virtual AI Coach adapts to all fitness levels - from complete beginners to advanced athletes. Our adaptive training program adjusts workout intensity based on your experience and goals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What types of workouts can I generate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Create custom HIIT workouts, strength training programs, cardio sessions, and flexibility routines. Choose from 100+ exercise videos with clear demonstrations and proper form guidance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the AI workout generator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Simply select your fitness goals, preferred intensity level, and any restrictions (like avoiding jumping exercises). Our AI creates a personalized workout program tailored to your needs in seconds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this virtual fitness coach on mobile?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely! Virtual AI Coach works on any device - smartphone, tablet, or computer. Train anywhere with your AI-powered personal trainer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Will this help me lose weight or build muscle?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! Customize your workout goals - whether you want to get fitter, build strength, lose weight, or improve overall health. Our personalized exercise programs adapt to your specific objectives."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this suitable for beginners with no fitness experience?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Perfect for beginners! Virtual AI Coach is beginner-friendly with clear video demonstrations, no judgment, and the ability to progress at your own pace. Start your fitness journey today."
+      }
+    }
+  ]
+};
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* FAQ Schema.org structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white">
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
-              Your Personal
-              <span className="block text-green-200">Virtual Sports Coach</span>
+              Your Free AI Personal Trainer
+              <span className="block text-green-200">Exercise at Your Own Pace, Without Judgment</span>
             </h1>
             <p className="text-xl sm:text-2xl text-green-50 mb-8 max-w-3xl mx-auto">
-              Personalized workouts with guided videos, adapted to your level and goals
+              AI-powered personalized workout programs for all fitness levels. Get fitter, build strength, or lose weight. No equipment needed.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -41,6 +118,36 @@ export default function Home() {
           <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="rgb(249, 250, 251)"/>
           </svg>
+        </div>
+      </section>
+
+      {/* About / Our Story Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-12 lg:p-16">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 text-center">
+              Fitness for Everyone, Without Judgment
+            </h2>
+            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
+              <p className="text-lg leading-relaxed">
+                <strong>Virtual AI Coach</strong> is a passion project built by an independent developer who believes that <strong>everyone deserves access to personalized fitness training</strong>, regardless of their experience level, budget, or physical condition.
+              </p>
+              <p className="text-lg leading-relaxed">
+                This <strong>AI-powered virtual personal trainer</strong> was created with a simple yet powerful mission: to help people <strong>get motivated to exercise without judgment, at their own pace</strong>, and achieve their unique fitness goals — whether that&apos;s getting fitter, building strength, losing weight, or simply feeling better in their body.
+              </p>
+              <p className="text-lg leading-relaxed">
+                No more intimidation. No more one-size-fits-all programs. Just <strong>customized workout routines</strong> that adapt to <em>your</em> goals, <em>your</em> fitness level, and <em>your</em> available equipment.
+              </p>
+              <p className="text-lg leading-relaxed">
+                Whether you&apos;re a complete beginner looking to start your fitness journey, an intermediate athlete wanting to level up, or someone getting back into shape after a break, <strong>Virtual AI Coach is here to guide you every step of the way</strong>.
+              </p>
+              <div className="bg-green-50 border-l-4 border-green-500 p-6 mt-8">
+                <p className="text-gray-800 font-medium">
+                  Born from a developer&apos;s passion to democratize fitness coaching through technology, Virtual AI Coach combines the power of artificial intelligence with exercise science to deliver professional-grade workout programs that previously required expensive personal trainers.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -204,6 +311,92 @@ export default function Home() {
             <Play className="w-6 h-6" fill="currentColor" />
             Start Now
           </Link>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-xl text-gray-600">
+            Everything you need to know about your AI personal trainer
+          </p>
+        </div>
+
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Is Virtual AI Coach really free?
+            </h3>
+            <p className="text-gray-600">
+              Yes! Virtual AI Coach is completely free to start. Generate personalized workout programs with our AI-powered fitness app at no cost. No credit card required, no hidden fees.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Do I need equipment for the workouts?
+            </h3>
+            <p className="text-gray-600">
+              No equipment needed! All workouts use bodyweight exercises that you can do anywhere, anytime. Perfect for home workout enthusiasts or those new to fitness training.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              What fitness levels does this AI personal trainer support?
+            </h3>
+            <p className="text-gray-600">
+              Virtual AI Coach adapts to all fitness levels - from complete beginners to advanced athletes. Our adaptive training program adjusts workout intensity based on your experience and goals.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              What types of workouts can I generate?
+            </h3>
+            <p className="text-gray-600">
+              Create custom HIIT workouts, strength training programs, cardio sessions, and flexibility routines. Choose from 100+ exercise videos with clear demonstrations and proper form guidance.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              How does the AI workout generator work?
+            </h3>
+            <p className="text-gray-600">
+              Simply select your fitness goals, preferred intensity level, and any restrictions (like avoiding jumping exercises). Our AI creates a personalized workout program tailored to your needs in seconds.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Can I use this virtual fitness coach on mobile?
+            </h3>
+            <p className="text-gray-600">
+              Absolutely! Virtual AI Coach works on any device - smartphone, tablet, or computer. Train anywhere with your AI-powered personal trainer.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Will this help me lose weight or build muscle?
+            </h3>
+            <p className="text-gray-600">
+              Yes! Customize your workout goals - whether you want to get fitter, build strength, lose weight, or improve overall health. Our personalized exercise programs adapt to your specific objectives.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-md">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Is this suitable for beginners with no fitness experience?
+            </h3>
+            <p className="text-gray-600">
+              Perfect for beginners! Virtual AI Coach is beginner-friendly with clear video demonstrations, no judgment, and the ability to progress at your own pace. Start your fitness journey today.
+            </p>
+          </div>
         </div>
       </section>
 

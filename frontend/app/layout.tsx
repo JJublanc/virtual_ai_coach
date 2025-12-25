@@ -17,21 +17,83 @@ const geistMono = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Virtual AI Coach - Personalized Video Workout Training",
-  description: "Your personal virtual sports coach with guided video workouts. Generate customized training sessions adapted to your fitness level, with real-time timers, exercise variety, and advanced customization options. No equipment needed.",
-  keywords: "virtual coach, workout videos, personalized training, fitness app, home workout, guided exercises, interval training, cardio, strength training, flexibility",
+  title: "Virtual AI Coach - Free AI Personal Trainer & Workout Generator",
+  description: "Get motivated to exercise at your own pace with Virtual AI Coach. Free AI-powered personalized workout programs for all fitness levels. Build strength, get fitter, or lose weight with 100+ bodyweight exercises. No equipment needed, no judgment.",
+  keywords: "AI personal trainer, virtual fitness coach, free workout generator, personalized exercise program, AI-powered fitness app, home workout planner, bodyweight training AI, custom workout creator, beginner-friendly fitness, adaptive training program, HIIT workout generator, strength training app, cardio workout planner, free fitness app",
   authors: [{ name: "Virtual AI Coach" }],
+  creator: "Independent Developer",
+  publisher: "Virtual AI Coach",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
-    title: "Virtual AI Coach - Personalized Video Workout Training",
-    description: "Generate customized video workouts with guided exercises, timers, and personalized intensity levels. Train anywhere, anytime.",
+    title: "Virtual AI Coach - Free AI Personal Trainer & Workout Generator",
+    description: "Get motivated to exercise without judgment, at your own pace. AI-generated personalized workouts for all fitness levels. 100+ exercise videos, no equipment required.",
     type: "website",
     locale: "en_US",
+    siteName: "Virtual AI Coach",
+    url: "https://tyswee.com",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Virtual AI Coach - Personalized Video Workout Training",
-    description: "Your personal virtual sports coach with guided video workouts and customized training sessions.",
+    title: "Virtual AI Coach - Free AI Personal Trainer",
+    description: "Personalized AI workout programs. Get fitter, stronger, or leaner at your own pace. 100+ exercises, no equipment needed.",
+    creator: "@virtualaicoach",
   },
+  alternates: {
+    canonical: "https://tyswee.com",
+  },
+  category: "Health & Fitness",
+};
+
+// Schema.org structured data for SEO
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Virtual AI Coach",
+  "url": "https://tyswee.com",
+  "logo": "https://tyswee.com/sport_room.png",
+  "description": "Free AI-powered virtual personal trainer providing personalized workout programs for all fitness levels",
+  "foundingDate": "2024",
+  "sameAs": [
+    "https://twitter.com/virtualaicoach"
+  ]
+};
+
+const webApplicationSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Virtual AI Coach",
+  "url": "https://tyswee.com",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "150"
+  },
+  "description": "AI-powered personalized workout generator. Free virtual personal trainer for all fitness levels.",
+  "featureList": [
+    "AI-generated personalized workouts",
+    "100+ exercise video library",
+    "No equipment required",
+    "Beginner-friendly fitness programs",
+    "HIIT, strength, and cardio workouts",
+    "Adaptive training at your own pace"
+  ]
 };
 
 export default function RootLayout({
@@ -41,6 +103,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

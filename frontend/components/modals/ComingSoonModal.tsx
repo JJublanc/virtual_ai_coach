@@ -112,7 +112,7 @@ export function ComingSoonModal({
       }, 3000)
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsSubmitting(false)
     }
@@ -146,8 +146,8 @@ export function ComingSoonModal({
       }, 2000)
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
-    } finally {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally{
       setIsSubmitting(false)
     }
   }
@@ -180,7 +180,7 @@ export function ComingSoonModal({
       // Après retour, le callback ajoutera automatiquement à la waitlist
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)
     }
   }
@@ -195,7 +195,7 @@ export function ComingSoonModal({
               <Sparkles className="w-6 h-6 text-gray-900" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Bientôt disponible</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Coming Soon</h2>
               <p className="text-sm text-gray-600">{featureName}</p>
             </div>
           </div>
@@ -216,13 +216,13 @@ export function ComingSoonModal({
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Merci !</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank you!</h3>
               <p className="text-gray-600">
                 {isOnWaitlist
-                  ? 'Votre commentaire a été enregistré.'
-                  : 'Vous êtes maintenant sur la liste d\'attente.'}
+                  ? 'Your comment has been saved.'
+                  : 'You are now on the waitlist.'}
                 <br />
-                Nous vous tiendrons informé dès que cette fonctionnalité sera disponible.
+                We'll keep you informed as soon as this feature is available.
               </p>
             </div>
           ) : user && isOnWaitlist ? (
@@ -232,23 +232,23 @@ export function ComingSoonModal({
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-green-900 mb-1">Vous êtes sur la liste d'attente</h3>
+                    <h3 className="font-semibold text-green-900 mb-1">You are on the waitlist</h3>
                     <p className="text-sm text-green-700">
-                      Merci pour votre intérêt ! Vous recevrez un email dès que la fonctionnalité <strong>{featureName}</strong> sera disponible.
+                      Thank you for your interest! You'll receive an email as soon as the <strong>{featureName}</strong> feature is available.
                     </p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Cette fonctionnalité vous permettra de :</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">This feature will allow you to:</h3>
                 <p className="text-gray-600 leading-relaxed">{featureDescription}</p>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-700">
-                  <strong>Statut :</strong> En cours de développement<br />
-                  <strong>Lancement estimé :</strong> Prochainement
+                  <strong>Status:</strong> In development<br />
+                  <strong>Estimated launch:</strong> Coming soon
                 </p>
               {/* Bouton de déconnexion pour permettre à d'autres utilisateurs de s'inscrire */}
               <div className="flex justify-end">
@@ -260,7 +260,7 @@ export function ComingSoonModal({
                   }}
                   className="text-sm text-gray-600 hover:text-gray-900 underline transition-colors"
                 >
-                  Se déconnecter (pour permettre à quelqu'un d'autre de s'inscrire)
+                  Sign out (to allow someone else to sign up)
                 </button>
               </div>
 
@@ -270,7 +270,7 @@ export function ComingSoonModal({
               <form onSubmit={handleCommentSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-                    Ajoutez ou modifiez vos suggestions (optionnel)
+                    Add or modify your suggestions (optional)
                   </label>
                   <div className="relative">
                     <MessageSquare className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -279,7 +279,7 @@ export function ComingSoonModal({
                       value={formData.comment}
                       onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
-                      placeholder="Partagez vos idées pour améliorer cette fonctionnalité..."
+                      placeholder="Share your ideas to improve this feature..."
                       rows={3}
                       disabled={isSubmitting}
                     />
@@ -297,7 +297,7 @@ export function ComingSoonModal({
                   disabled={isSubmitting || !formData.comment.trim()}
                   className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer le commentaire'}
+                  {isSubmitting ? 'Saving...' : 'Save comment'}
                 </button>
               </form>
             </>
@@ -306,22 +306,22 @@ export function ComingSoonModal({
             <>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-gray-700 leading-relaxed">
-                  Notre application est en cours de développement actif. La fonctionnalité <strong>{featureName}</strong> arrive bientôt !
+                  Our application is under active development. The <strong>{featureName}</strong> feature is coming soon!
                 </p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Cette fonctionnalité vous permettra de :</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">This feature will allow you to:</h3>
                 <p className="text-gray-600 leading-relaxed">{featureDescription}</p>
               </div>
 
               <div className="bg-gradient-to-r from-gray-900 to-gray-700 rounded-lg p-4 text-white">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-5 h-5" />
-                  <h3 className="font-semibold">Offre Early Access</h3>
+                  <h3 className="font-semibold">Early Access Offer</h3>
                 </div>
                 <p className="text-sm text-gray-200">
-                  Inscrivez-vous maintenant et bénéficiez d'une réduction exclusive pour les 3 premiers mois lors du lancement !
+                  Sign up now and get an exclusive discount for the first 3 months at launch!
                 </p>
               </div>
 
@@ -336,7 +336,7 @@ export function ComingSoonModal({
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Créer un compte
+                  Create account
                 </button>
                 <button
                   type="button"
@@ -347,7 +347,7 @@ export function ComingSoonModal({
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Se connecter
+                  Sign in
                 </button>
               </div>
 
@@ -366,7 +366,7 @@ export function ComingSoonModal({
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                      placeholder="votre@email.com"
+                      placeholder="your@email.com"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -374,7 +374,7 @@ export function ComingSoonModal({
 
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                    Mot de passe <span className="text-red-500">*</span>
+                    Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -386,7 +386,7 @@ export function ComingSoonModal({
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                      placeholder="Minimum 6 caractères"
+                      placeholder="Minimum 6 characters"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -395,7 +395,7 @@ export function ComingSoonModal({
                 {authMode === 'signup' && (
                   <div>
                     <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-                      Vos attentes (optionnel)
+                      Your expectations (optional)
                     </label>
                     <div className="relative">
                       <MessageSquare className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -404,7 +404,7 @@ export function ComingSoonModal({
                         value={formData.comment}
                         onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
-                        placeholder="Dites-nous ce que vous attendez de cette fonctionnalité..."
+                        placeholder="Tell us what you expect from this feature..."
                         rows={3}
                         disabled={isSubmitting}
                       />
@@ -425,7 +425,7 @@ export function ComingSoonModal({
                       <div className="w-full border-t border-gray-300"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-gray-500">Ou continuer avec</span>
+                      <span className="px-2 bg-white text-gray-500">Or continue with</span>
                     </div>
                   </div>
 
@@ -458,12 +458,12 @@ export function ComingSoonModal({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      {authMode === 'signup' ? 'Création du compte...' : 'Connexion...'}
+                      {authMode === 'signup' ? 'Creating account...' : 'Signing in...'}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      {authMode === 'signup' ? 'Créer un compte et rejoindre la waitlist' : 'Se connecter et rejoindre la waitlist'}
+                      {authMode === 'signup' ? 'Create account and join the waitlist' : 'Sign in and join the waitlist'}
                     </>
                   )}
                 </button>
@@ -471,8 +471,8 @@ export function ComingSoonModal({
 
               <p className="text-xs text-gray-500 text-center">
                 {authMode === 'signup'
-                  ? 'En créant un compte, vous acceptez de recevoir des informations sur le lancement de cette fonctionnalité.'
-                  : 'Vous serez automatiquement ajouté à la liste d\'attente après connexion.'}
+                  ? 'By creating an account, you agree to receive information about the launch of this feature.'
+                  : 'You will be automatically added to the waitlist after signing in.'}
               </p>
             </>
           )}
