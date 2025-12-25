@@ -50,7 +50,7 @@ export default function CompleteSignupPage() {
       // Rediriger vers la page d'accueil avec un message de succès
       router.push('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)
     }
   }
@@ -72,24 +72,24 @@ export default function CompleteSignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Inscription réussie ! 🎉
+          Registration successful! 🎉
         </h1>
 
         <p className="text-gray-600 mb-6">
-          Vous êtes maintenant inscrit pour être informé du lancement de la fonctionnalité{' '}
-          <span className="font-semibold">{featureName}</span>.
+          You are now registered to be informed about the launch of the{' '}
+          <span className="font-semibold">{featureName}</span> feature.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-              Souhaitez-vous ajouter un commentaire ? (optionnel)
+              Would you like to add a comment? (optional)
             </label>
             <textarea
               id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Ex: J'aimerais pouvoir... ou Je souhaiterais que..."
+              placeholder="E.g.: I would like to be able to... or I wish that..."
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isSubmitting}
@@ -109,14 +109,14 @@ export default function CompleteSignupPage() {
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Passer
+              Skip
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Envoi...' : 'Envoyer'}
+              {isSubmitting ? 'Sending...' : 'Send'}
             </button>
           </div>
         </form>

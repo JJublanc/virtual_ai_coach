@@ -5,10 +5,10 @@ import { z } from 'zod'
 
 // Schéma de validation avec Zod
 const signupSchema = z.object({
-  email: z.string().email({ message: 'Email invalide' }),
-  firstName: z.string().min(1, { message: 'Le prénom est requis' }).max(100),
-  lastName: z.string().min(1, { message: 'Le nom est requis' }).max(100),
-  featureInterest: z.string().min(1, { message: 'La fonctionnalité d\'intérêt est requise' }),
+  email: z.string().email({ message: 'Invalid email' }),
+  firstName: z.string().min(1, { message: 'First name is required' }).max(100),
+  lastName: z.string().min(1, { message: 'Last name is required' }).max(100),
+  featureInterest: z.string().min(1, { message: 'Feature of interest is required' }),
   comment: z.string().optional(),
 })
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       // Erreur de contrainte unique (email déjà existant)
       if (error.code === '23505') {
         return NextResponse.json(
-          { error: 'Cet email est déjà inscrit' },
+          { error: 'This email is already registered' },
           { status: 409 }
         )
       }
