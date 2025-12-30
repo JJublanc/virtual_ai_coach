@@ -9,11 +9,11 @@ TODO: Migrer vers Supabase pour le chargement des exercices
 import json
 import random
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 from uuid import uuid4
 
 from ..models.config import WorkoutConfig
-from ..models.exercise import Exercise, Difficulty
+from ..models.exercise import Exercise, Difficulty, Laterality
 from ..models.workout import Workout, WorkoutExercise
 
 
@@ -119,6 +119,25 @@ def filter_exercises(
     return filtered
 
 
+def find_exercise_by_id(
+    exercise_id: str, exercises_pool: List[Exercise]
+) -> Optional[Exercise]:
+    """
+    Trouve un exercice par son ID dans le pool.
+
+    Args:
+        exercise_id: UUID de l'exercice à trouver
+        exercises_pool: Pool d'exercices disponibles
+
+    Returns:
+        L'exercice correspondant si trouvé, None sinon
+    """
+    for ex in exercises_pool:
+        if str(ex.id) == exercise_id:
+            return ex
+    return None
+
+
 def generate_random_exercises(
     exercises_pool: List[Exercise], count: int
 ) -> List[Exercise]:
@@ -126,12 +145,16 @@ def generate_random_exercises(
     Tire aléatoirement des exercices depuis un pool en évitant que le même exercice
     apparaisse parmi les 2 exercices précédents.
 
+    Gestion de la latéralité :
+    - Si un exercice "left" ou "right" est tiré, l'exercice suivant DOIT être son symétrique
+    - Si un exercice latéral est tiré en dernière position, il est remplacé par un bilateral
+
     Args:
         exercises_pool: Pool d'exercices éligibles
         count: Nombre d'exercices à tirer
 
     Returns:
-        List[Exercise]: Exercices sélectionnés (peut contenir des doublons non consécutifs)
+        List[Exercise]: Exercices sélectionnés avec alternance left/right garantie
 
     Note:
         Évite qu'un exercice soit identique à l'un des 2 exercices précédents.
@@ -165,29 +188,83 @@ def generate_random_exercises(
             return result
 
     selected_exercises = []
+    must_use_symmetric = (
+        False  # Flag pour forcer l'utilisation d'un exercice symétrique
+    )
+    expected_exercise = None  # L'exercice symétrique attendu
 
     for i in range(count):
-        if i < 2:
-            # Pour les 2 premiers exercices : tirage aléatoire simple
-            # mais on évite quand même le précédent si i == 1
-            if i == 0:
-                exercise = random.choice(exercises_pool)
-            else:  # i == 1
-                previous = selected_exercises[0]
-                available_pool = [ex for ex in exercises_pool if ex.id != previous.id]
-                exercise = random.choice(available_pool)
+        # Si on doit utiliser un exercice symétrique
+        if must_use_symmetric and expected_exercise:
+            exercise = expected_exercise
+            must_use_symmetric = False
+            expected_exercise = None
         else:
-            # Pour les exercices suivants : éviter les 2 précédents
-            prev_1 = selected_exercises[-1]
-            prev_2 = selected_exercises[-2]
+            if i < 2:
+                # Pour les 2 premiers exercices : tirage aléatoire simple
+                # mais on évite quand même le précédent si i == 1
+                if i == 0:
+                    exercise = random.choice(exercises_pool)
+                else:  # i == 1
+                    previous = selected_exercises[0]
+                    available_pool = [
+                        ex for ex in exercises_pool if ex.id != previous.id
+                    ]
+                    exercise = random.choice(available_pool)
+            else:
+                # Pour les exercices suivants : éviter les 2 précédents
+                prev_1 = selected_exercises[-1]
+                prev_2 = selected_exercises[-2]
 
-            # Créer un pool sans les 2 exercices précédents
-            available_pool = [
-                ex for ex in exercises_pool if ex.id != prev_1.id and ex.id != prev_2.id
-            ]
+                # Créer un pool sans les 2 exercices précédents
+                available_pool = [
+                    ex
+                    for ex in exercises_pool
+                    if ex.id != prev_1.id and ex.id != prev_2.id
+                ]
 
-            # Tirer un exercice du pool filtré
-            exercise = random.choice(available_pool)
+                # Tirer un exercice du pool filtré
+                exercise = random.choice(available_pool)
+
+        # Vérifier si l'exercice a une latéralité left ou right
+        if exercise.metadata and exercise.metadata.laterality in [
+            Laterality.LEFT,
+            Laterality.RIGHT,
+        ]:
+            # Si c'est le dernier exercice, le remplacer par un bilateral
+            if i == count - 1:
+                # Chercher un exercice bilateral
+                bilateral_pool = [
+                    ex
+                    for ex in exercises_pool
+                    if not ex.metadata or ex.metadata.laterality == Laterality.BILATERAL
+                ]
+
+                # Exclure aussi les 2 précédents si possible
+                if i >= 2:
+                    prev_1 = selected_exercises[-1]
+                    prev_2 = selected_exercises[-2]
+                    bilateral_pool = [
+                        ex
+                        for ex in bilateral_pool
+                        if ex.id != prev_1.id and ex.id != prev_2.id
+                    ]
+                elif i == 1:
+                    prev_1 = selected_exercises[-1]
+                    bilateral_pool = [ex for ex in bilateral_pool if ex.id != prev_1.id]
+
+                if bilateral_pool:
+                    exercise = random.choice(bilateral_pool)
+                # Sinon, garder l'exercice même s'il est latéral
+            else:
+                # Chercher l'exercice symétrique via symmetric_exercise_id
+                if exercise.metadata.symmetric_exercise_id:
+                    symmetric = find_exercise_by_id(
+                        exercise.metadata.symmetric_exercise_id, exercises_pool
+                    )
+                    if symmetric:
+                        must_use_symmetric = True
+                        expected_exercise = symmetric
 
         selected_exercises.append(exercise)
 

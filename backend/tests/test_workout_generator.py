@@ -5,7 +5,7 @@ from uuid import uuid4
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from app.models.exercise import Exercise, Difficulty
+from app.models.exercise import Exercise, Difficulty, Laterality, ExerciseMetadata
 from app.models.workout import Workout, WorkoutExercise
 from app.models.config import WorkoutConfig
 from app.services.workout_generator import (
@@ -13,6 +13,7 @@ from app.services.workout_generator import (
     filter_exercises,
     generate_random_exercises,
     generate_workout_exercises,
+    find_exercise_by_id,
 )
 
 
@@ -483,3 +484,209 @@ def test_full_workflow_all_exercises_allowed():
     assert all(isinstance(ex, WorkoutExercise) for ex in result)
     assert result[0].order_index == 0
     assert result[-1].order_index == 19
+
+
+# ============================================================================
+# TESTS DE LATÉRALITÉ
+# ============================================================================
+
+
+def test_laterality_left_right_alternation():
+    """Vérifie que si un exercice left est tiré, le suivant est son symétrique right."""
+    left_id = uuid4()
+    right_id = uuid4()
+    bilateral_id = uuid4()
+
+    exercises_pool = [
+        Exercise(
+            id=left_id,
+            name="Side Plank Left",
+            description="Plank latéral gauche",
+            video_url="/path/to/video_left.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(
+                laterality=Laterality.LEFT,
+                symmetric_exercise_id=str(right_id),
+            ),
+        ),
+        Exercise(
+            id=right_id,
+            name="Side Plank Right",
+            description="Plank latéral droit",
+            video_url="/path/to/video_right.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(
+                laterality=Laterality.RIGHT,
+                symmetric_exercise_id=str(left_id),
+            ),
+        ),
+        Exercise(
+            id=bilateral_id,
+            name="Plank",
+            description="Plank classique",
+            video_url="/path/to/video_plank.mov",
+            default_duration=60,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(laterality=Laterality.BILATERAL),
+        ),
+    ]
+
+    # Générer plusieurs séries pour tester
+    for _ in range(10):
+        selected = generate_random_exercises(exercises_pool, count=10)
+
+        # Vérifier qu'après chaque exercice left, il y a un right (et vice versa)
+        for i in range(len(selected) - 1):
+            if (
+                selected[i].metadata
+                and selected[i].metadata.laterality == Laterality.LEFT
+            ):
+                # Le suivant DOIT être son symétrique (right)
+                assert selected[i + 1].metadata.laterality == Laterality.RIGHT
+                assert (
+                    str(selected[i + 1].id)
+                    == selected[i].metadata.symmetric_exercise_id
+                )
+            elif (
+                selected[i].metadata
+                and selected[i].metadata.laterality == Laterality.RIGHT
+            ):
+                # Le suivant DOIT être son symétrique (left)
+                assert selected[i + 1].metadata.laterality == Laterality.LEFT
+                assert (
+                    str(selected[i + 1].id)
+                    == selected[i].metadata.symmetric_exercise_id
+                )
+
+
+def test_laterality_no_lateral_as_last_exercise():
+    """Vérifie qu'un exercice latéral n'est jamais en dernière position."""
+    left_id = uuid4()
+    right_id = uuid4()
+    bilateral_id = uuid4()
+
+    exercises_pool = [
+        Exercise(
+            id=left_id,
+            name="Split Squat Left",
+            description="Split squat gauche",
+            video_url="/path/to/video_left.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(
+                laterality=Laterality.LEFT,
+                symmetric_exercise_id=str(right_id),
+            ),
+        ),
+        Exercise(
+            id=right_id,
+            name="Split Squat Right",
+            description="Split squat droit",
+            video_url="/path/to/video_right.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(
+                laterality=Laterality.RIGHT,
+                symmetric_exercise_id=str(left_id),
+            ),
+        ),
+        Exercise(
+            id=bilateral_id,
+            name="Regular Squat",
+            description="Squat classique",
+            video_url="/path/to/video_squat.mov",
+            default_duration=60,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(laterality=Laterality.BILATERAL),
+        ),
+    ]
+
+    # Tester plusieurs fois pour s'assurer que c'est consistant
+    for _ in range(20):
+        selected = generate_random_exercises(exercises_pool, count=7)
+
+        # Le dernier exercice NE DOIT PAS être latéral
+        last_exercise = selected[-1]
+        assert last_exercise.metadata.laterality == Laterality.BILATERAL, (
+            f"Le dernier exercice ne devrait pas être latéral, "
+            f"mais est {last_exercise.metadata.laterality}"
+        )
+
+
+def test_find_exercise_by_id():
+    """Vérifie que find_exercise_by_id trouve correctement un exercice."""
+    ex1_id = uuid4()
+    ex2_id = uuid4()
+
+    pool = [
+        Exercise(
+            id=ex1_id,
+            name="Exercise 1",
+            video_url="/path/to/video1.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+        ),
+        Exercise(
+            id=ex2_id,
+            name="Exercise 2",
+            video_url="/path/to/video2.mov",
+            default_duration=30,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+        ),
+    ]
+
+    # Trouver un exercice existant
+    found = find_exercise_by_id(str(ex1_id), pool)
+    assert found is not None
+    assert found.id == ex1_id
+    assert found.name == "Exercise 1"
+
+    # Essayer de trouver un exercice inexistant
+    not_found = find_exercise_by_id(str(uuid4()), pool)
+    assert not_found is None
+
+
+def test_laterality_with_bilateral_only():
+    """Vérifie que le comportement est correct avec uniquement des exercices bilatéraux."""
+    bilateral1_id = uuid4()
+    bilateral2_id = uuid4()
+
+    exercises_pool = [
+        Exercise(
+            id=bilateral1_id,
+            name="Plank",
+            description="Plank",
+            video_url="/path/to/plank.mov",
+            default_duration=60,
+            difficulty=Difficulty.MEDIUM,
+            has_jump=False,
+            metadata=ExerciseMetadata(laterality=Laterality.BILATERAL),
+        ),
+        Exercise(
+            id=bilateral2_id,
+            name="Squat",
+            description="Squat",
+            video_url="/path/to/squat.mov",
+            default_duration=60,
+            difficulty=Difficulty.EASY,
+            has_jump=False,
+            metadata=ExerciseMetadata(laterality=Laterality.BILATERAL),
+        ),
+    ]
+
+    # Pas de problème attendu avec uniquement des bilatéraux
+    selected = generate_random_exercises(exercises_pool, count=10)
+
+    assert len(selected) == 10
+    # Tous devraient être bilatéraux
+    assert all(ex.metadata.laterality == Laterality.BILATERAL for ex in selected)
