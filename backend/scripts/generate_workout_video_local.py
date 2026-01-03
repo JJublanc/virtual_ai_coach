@@ -26,8 +26,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # ruff: noqa: E402
 from app.api.exercises import load_exercises
-from app.models.config import WorkoutConfig
-from app.models.exercise import Difficulty, Exercise
+from app.models.config import WorkoutConfig, BlockConfig
+from app.models.exercise import Difficulty, Exercise, ExerciseTheme
 from app.models.workout import Workout
 from app.services.video_service_optimized import OptimizedVideoService
 from app.services.workout_generator import generate_workout_exercises
@@ -98,6 +98,37 @@ def parse_arguments():
         help="Durée de repos entre exercices en secondes (défaut: 20)",
     )
 
+    # NOUVEAU : Options pour le mode blocs thématiques
+    parser.add_argument(
+        "--use-blocks",
+        action="store_true",
+        help="Utiliser la génération par blocs thématiques (minimum 10 minutes)",
+    )
+    parser.add_argument(
+        "--themes",
+        nargs="+",
+        choices=["abs", "upper_body", "legs", "cardio", "full_body"],
+        default=["abs", "upper_body", "cardio"],
+        help="Thèmes des blocs dans l'ordre (défaut: abs upper_body cardio)",
+    )
+    parser.add_argument(
+        "--exercises-per-block",
+        type=int,
+        default=3,
+        help="Nombre d'exercices différents par bloc (défaut: 3)",
+    )
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=3,
+        help="Nombre de répétitions de chaque bloc (défaut: 3)",
+    )
+    parser.add_argument(
+        "--no-finishers",
+        action="store_true",
+        help="Ne pas ajouter de finishers à la fin",
+    )
+
     # Paramètres de sortie
     parser.add_argument(
         "--output-dir",
@@ -152,6 +183,11 @@ def generate_auto_workout(
     rest_time: int,
     workout_name: str,
     speed: str,
+    use_blocks: bool = False,
+    themes: List[str] = None,
+    exercises_per_block: int = 3,
+    repetitions: int = 3,
+    no_finishers: bool = False,
 ) -> tuple[Workout, List[Exercise], WorkoutConfig]:
     """
     Génère automatiquement un workout basé sur les critères.
@@ -165,6 +201,12 @@ def generate_auto_workout(
     logger.info(f"   Intensités: {intensity_levels}")
     logger.info(f"   Intervalles: {work_time}s travail / {rest_time}s repos")
 
+    if use_blocks:
+        logger.info("   🎯 Mode BLOCS activé")
+        logger.info(f"      Thèmes: {themes}")
+        logger.info(f"      Exercices par bloc: {exercises_per_block}")
+        logger.info(f"      Répétitions: {repetitions}")
+
     # Convertir les niveaux d'intensité en Difficulty
     difficulty_map = {
         "easy": Difficulty.EASY,
@@ -173,6 +215,28 @@ def generate_auto_workout(
     }
     difficulties = [difficulty_map[level] for level in intensity_levels]
 
+    # Créer la configuration des blocs si demandé
+    block_config = None
+    if use_blocks:
+        theme_enum_map = {
+            "abs": ExerciseTheme.ABS,
+            "upper_body": ExerciseTheme.UPPER_BODY,
+            "legs": ExerciseTheme.LEGS,
+            "cardio": ExerciseTheme.CARDIO,
+            "full_body": ExerciseTheme.FULL_BODY,
+        }
+        theme_enums = [
+            theme_enum_map[t] for t in (themes or ["abs", "upper_body", "cardio"])
+        ]
+
+        block_config = BlockConfig(
+            themes=theme_enums,
+            exercises_per_block=exercises_per_block,
+            repetitions_per_block=repetitions,
+            fill_remaining_with_finishers=not no_finishers,
+            finisher_themes=[ExerciseTheme.CARDIO, ExerciseTheme.FULL_BODY],
+        )
+
     # Créer la configuration
     config = WorkoutConfig(
         intensity=speed,
@@ -180,6 +244,8 @@ def generate_auto_workout(
         no_jump=no_jump,
         exercice_intensity_levels=difficulties,
         target_duration=duration // 60,  # en minutes
+        use_block_structure=use_blocks,
+        block_config=block_config,
     )
 
     # Créer le workout
@@ -366,6 +432,13 @@ def main():
 
         # Générer le workout selon le mode
         if args.auto:
+            # Valider la durée minimale pour les blocs
+            if args.use_blocks and args.duration < 600:
+                logger.error(
+                    "❌ Erreur: Les blocs thématiques nécessitent minimum 10 minutes (600s)"
+                )
+                return 1
+
             # Mode automatique
             workout, exercises, config = generate_auto_workout(
                 duration=args.duration,
@@ -375,6 +448,11 @@ def main():
                 rest_time=args.rest_time,
                 workout_name=args.name,
                 speed=args.speed,
+                use_blocks=args.use_blocks,
+                themes=args.themes if args.use_blocks else None,
+                exercises_per_block=args.exercises_per_block,
+                repetitions=args.repetitions,
+                no_finishers=args.no_finishers,
             )
         else:
             # Mode manuel

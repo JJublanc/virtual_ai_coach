@@ -13,7 +13,7 @@ from typing import List, Dict, Optional
 from uuid import uuid4
 
 from ..models.config import WorkoutConfig
-from ..models.exercise import Exercise, Difficulty, Laterality
+from ..models.exercise import Exercise, Difficulty, Laterality, ExerciseTheme
 from ..models.workout import Workout, WorkoutExercise
 
 
@@ -273,15 +273,11 @@ def generate_random_exercises(
 
 def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
     """
-    Génère la liste complète des exercices pour un workout.
+    Point d'entrée principal pour la génération d'exercices.
 
-    Cette fonction principale orchestre tout le processus de génération :
-    1. Valide les entrées (config, duration)
-    2. Charge tous les exercices disponibles
-    3. Filtre selon les critères (no_jump, intensity_levels)
-    4. Calcule le nombre d'exercices nécessaires
-    5. Tire aléatoirement avec remise
-    6. Crée les WorkoutExercise avec order_index séquentiel
+    Route vers l'algorithme approprié :
+    - Génération par blocs si use_block_structure=True
+    - Génération classique sinon
 
     Args:
         workout: Objet Workout avec config et total_duration remplis
@@ -292,51 +288,77 @@ def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
     Raises:
         ValueError: Si la config est manquante, la durée invalide,
                    ou si aucun exercice ne correspond aux critères
-        FileNotFoundError: Si le fichier exercises.json n'existe pas
 
     Example:
+        >>> # Génération classique
         >>> workout = Workout(
-        ...     total_duration=600,  # 10 minutes
+        ...     total_duration=600,
+        ...     config=WorkoutConfig(no_jump=True)
+        ... )
+        >>> exercises = generate_workout_exercises(workout)
+
+        >>> # Génération par blocs
+        >>> workout = Workout(
+        ...     total_duration=1800,
         ...     config=WorkoutConfig(
-        ...         no_jump=True,
-        ...         exercice_intensity_levels=[Difficulty.EASY, Difficulty.MEDIUM]
+        ...         use_block_structure=True,
+        ...         block_config=BlockConfig(themes=[ExerciseTheme.ABS, ExerciseTheme.CARDIO])
         ...     )
         ... )
         >>> exercises = generate_workout_exercises(workout)
-        >>> len(exercises)
-        10
-        >>> exercises[0].order_index
-        0
-        >>> exercises[-1].order_index
-        9
+    """
+    # Validation de base
+    if not workout.config:
+        raise ValueError("Le workout doit avoir une configuration")
+
+    if not workout.total_duration or workout.total_duration <= 0:
+        raise ValueError(f"total_duration invalide: {workout.total_duration}")
+
+    # Router vers l'algorithme approprié
+    if workout.config.use_block_structure:
+        return generate_workout_with_blocks(workout)
+    else:
+        return _generate_workout_classic(workout)
+
+
+def _generate_workout_classic(workout: Workout) -> List[WorkoutExercise]:
+    """
+    Génère la liste complète des exercices pour un workout (algorithme classique).
+
+    Cette fonction orchestre le processus de génération classique :
+    1. Charge tous les exercices disponibles
+    2. Filtre selon les critères (no_jump, intensity_levels)
+    3. Calcule le nombre d'exercices nécessaires
+    4. Tire aléatoirement avec remise
+    5. Crée les WorkoutExercise avec order_index séquentiel
+
+    Args:
+        workout: Objet Workout avec config et total_duration remplis
+
+    Returns:
+        List[WorkoutExercise]: Liste ordonnée des exercices pour le workout
+
+    Raises:
+        ValueError: Si aucun exercice ne correspond aux critères
 
     Note:
         Le calcul du nombre d'exercices suit la règle :
         1 exercice par minute (intervals de ~60s avec work_time + rest_time)
         Donc nb_exercises = total_duration // 60
     """
-    # 1. Validation des entrées
-    if not workout.config:
-        raise ValueError("Le workout doit avoir une configuration (config)")
-
-    if not workout.total_duration or workout.total_duration <= 0:
-        raise ValueError(
-            f"total_duration doit être positif, reçu: {workout.total_duration}"
-        )
-
-    # 2. Charger tous les exercices disponibles depuis Supabase
+    # 1. Charger tous les exercices disponibles depuis Supabase
     from ..api.exercises import load_exercises
 
     all_exercises = load_exercises()
 
-    # 3. Filtrer selon les critères de configuration
+    # 2. Filtrer selon les critères de configuration
     filtered_exercises = filter_exercises(
         exercises=all_exercises,
         no_jump=workout.config.no_jump,
         intensity_levels=workout.config.exercice_intensity_levels,
     )
 
-    # 4. Calculer le nombre d'exercices nécessaires
+    # 3. Calculer le nombre d'exercices nécessaires
     # 1 exercice par minute (intervals de ~60s)
     num_exercises = workout.total_duration // 60
 
@@ -346,12 +368,12 @@ def generate_workout_exercises(workout: Workout) -> List[WorkoutExercise]:
             f"Minimum 60 secondes requis, reçu: {workout.total_duration}s"
         )
 
-    # 5. Tirer aléatoirement avec remise
+    # 4. Tirer aléatoirement avec remise
     selected_exercises = generate_random_exercises(
         exercises_pool=filtered_exercises, count=num_exercises
     )
 
-    # 6. Créer les WorkoutExercise avec order_index séquentiel
+    # 5. Créer les WorkoutExercise avec order_index séquentiel
     workout_exercises = []
     for index, exercise in enumerate(selected_exercises):
         workout_exercise = WorkoutExercise(
@@ -426,3 +448,314 @@ def generate_workout_with_intervals(
             order += 1
 
     return workout_items
+
+
+def filter_exercises_by_theme(
+    exercises: List[Exercise], theme: ExerciseTheme
+) -> List[Exercise]:
+    """
+    Filtre les exercices par thème.
+
+    Un exercice est inclus si :
+    - Il a exactement ce thème
+    - Il a ce thème parmi plusieurs
+    - Il est FULL_BODY (compatible avec tous les blocs)
+
+    Args:
+        exercises: Pool d'exercices filtrés
+        theme: Thème recherché
+
+    Returns:
+        Liste d'exercices correspondant au thème
+
+    Example:
+        >>> abs_exercises = filter_exercises_by_theme(exercises, ExerciseTheme.ABS)
+        >>> # Retourne tous les exercices avec theme ABS ou FULL_BODY
+    """
+    filtered = []
+    for ex in exercises:
+        if not ex.metadata or not ex.metadata.themes:
+            # Si pas de thèmes définis, considérer comme FULL_BODY
+            if theme == ExerciseTheme.FULL_BODY:
+                filtered.append(ex)
+        else:
+            # Inclure si le thème est dans la liste OU si c'est un FULL_BODY
+            if (
+                theme in ex.metadata.themes
+                or ExerciseTheme.FULL_BODY in ex.metadata.themes
+            ):
+                filtered.append(ex)
+
+    return filtered
+
+
+def select_diverse_exercises(exercises: List[Exercise], count: int) -> List[Exercise]:
+    """
+    Sélectionne N exercices différents en maximisant la diversité.
+
+    Critères de sélection :
+    - Tous les exercices doivent être différents
+    - Éviter les exercices trop similaires (même muscles principaux)
+    - Respecter la latéralité (alternance left/right)
+
+    Args:
+        exercises: Pool d'exercices du thème
+        count: Nombre d'exercices à sélectionner
+
+    Returns:
+        Liste de N exercices différents
+
+    Raises:
+        ValueError: Si pas assez d'exercices disponibles
+
+    Example:
+        >>> selected = select_diverse_exercises(abs_exercises, count=3)
+        >>> len(selected)
+        3
+        >>> # Les 3 exercices sont différents
+    """
+    if len(exercises) < count:
+        raise ValueError(
+            f"Pas assez d'exercices pour le thème. "
+            f"Requis: {count}, Disponibles: {len(exercises)}"
+        )
+
+    selected = []
+    available = exercises.copy()
+
+    while len(selected) < count:
+        # Éviter les exercices avec muscles trop similaires aux précédents
+        if selected:
+            last_muscles = set(selected[-1].metadata.muscles_targeted or [])
+            # Prioriser les exercices avec muscles différents
+            different_muscle_exercises = [
+                ex
+                for ex in available
+                if not (set(ex.metadata.muscles_targeted or []) & last_muscles)
+            ]
+            if different_muscle_exercises:
+                pool = different_muscle_exercises
+            else:
+                pool = available
+        else:
+            pool = available
+
+        # Sélection aléatoire
+        exercise = random.choice(pool)
+        selected.append(exercise)
+
+        # Retirer l'exercice sélectionné du pool
+        available = [ex for ex in available if ex.id != exercise.id]
+
+        # Gérer la latéralité
+        if exercise.metadata and exercise.metadata.laterality in [
+            Laterality.LEFT,
+            Laterality.RIGHT,
+        ]:
+            # Ajouter automatiquement l'exercice symétrique si disponible
+            if exercise.metadata.symmetric_exercise_id and len(selected) < count:
+                symmetric = find_exercise_by_id(
+                    exercise.metadata.symmetric_exercise_id, available
+                )
+                if symmetric:
+                    selected.append(symmetric)
+                    available = [ex for ex in available if ex.id != symmetric.id]
+
+    return selected[:count]
+
+
+def select_finisher_exercises(
+    exercises: List[Exercise], themes: List[ExerciseTheme], count: int
+) -> List[Exercise]:
+    """
+    Sélectionne plusieurs exercices intenses pour finir le workout.
+
+    Les finishers sont sélectionnés pour maximiser l'intensité finale :
+    - Difficulté HARD de préférence
+    - Thèmes CARDIO ou FULL_BODY privilégiés
+    - has_jump=True privilégié (sauf si no_jump actif)
+    - Diversité entre les finishers
+
+    Args:
+        exercises: Pool d'exercices filtrés
+        themes: Thèmes autorisés pour les finishers
+        count: Nombre de finishers à sélectionner
+
+    Returns:
+        Liste de finishers
+
+    Raises:
+        ValueError: Si pas assez d'exercices disponibles
+
+    Example:
+        >>> finishers = select_finisher_exercises(
+        ...     exercises,
+        ...     themes=[ExerciseTheme.CARDIO, ExerciseTheme.FULL_BODY],
+        ...     count=3
+        ... )
+        >>> len(finishers)
+        3
+    """
+    # Filtrer par thèmes autorisés
+    finisher_pool = []
+    for theme in themes:
+        finisher_pool.extend(filter_exercises_by_theme(exercises, theme))
+
+    # Retirer les doublons
+    finisher_pool = list({ex.id: ex for ex in finisher_pool}.values())
+
+    if len(finisher_pool) < count:
+        raise ValueError(
+            f"Pas assez d'exercices pour les finishers. "
+            f"Requis: {count}, Disponibles: {len(finisher_pool)}"
+        )
+
+    # Prioriser HARD
+    hard_exercises = [ex for ex in finisher_pool if ex.difficulty == Difficulty.HARD]
+    if hard_exercises and len(hard_exercises) >= count:
+        finisher_pool = hard_exercises
+
+    # Prioriser has_jump si disponible
+    jump_exercises = [ex for ex in finisher_pool if ex.has_jump]
+    if jump_exercises and len(jump_exercises) >= count:
+        finisher_pool = jump_exercises
+
+    # Sélectionner de manière diversifiée
+    selected = []
+    available = finisher_pool.copy()
+
+    for _ in range(count):
+        if not available:
+            # Si on manque d'options, réinitialiser le pool
+            available = finisher_pool.copy()
+
+        exercise = random.choice(available)
+        selected.append(exercise)
+        # Retirer pour éviter les répétitions immédiates
+        available = [ex for ex in available if ex.id != exercise.id]
+
+    return selected
+
+
+def generate_workout_with_blocks(workout: Workout) -> List[WorkoutExercise]:
+    """
+    Génère un workout structuré en blocs thématiques répétitifs.
+
+    Cette fonction organise les exercices en blocs thématiques où chaque bloc :
+    - Contient N exercices différents du même thème
+    - Est répété X fois
+    - Le temps restant est rempli avec des finishers
+
+    Args:
+        workout: Objet Workout avec config.use_block_structure=True
+
+    Returns:
+        List[WorkoutExercise]: Liste ordonnée des exercices avec blocs
+
+    Raises:
+        ValueError: Si duration < 10 min ou config invalide
+
+    Example:
+        >>> workout = Workout(
+        ...     total_duration=1800,  # 30 minutes
+        ...     config=WorkoutConfig(
+        ...         use_block_structure=True,
+        ...         block_config=BlockConfig(
+        ...             themes=[ExerciseTheme.ABS, ExerciseTheme.UPPER_BODY, ExerciseTheme.CARDIO],
+        ...             exercises_per_block=3,
+        ...             repetitions_per_block=3,
+        ...             fill_remaining_with_finishers=True
+        ...         )
+        ...     )
+        ... )
+        >>> exercises = generate_workout_with_blocks(workout)
+        >>> # Résultat : 3 blocs × 3 exercices × 3 répétitions + finishers = 30 exercices
+    """
+    # 1. Validation
+    if not workout.config.use_block_structure:
+        raise ValueError("use_block_structure doit être True")
+
+    if workout.total_duration < 600:
+        raise ValueError("La durée minimum pour les blocs est de 10 minutes (600s)")
+
+    block_config = workout.config.block_config
+    if not block_config:
+        raise ValueError("block_config est requis quand use_block_structure=True")
+
+    # 2. Charger et filtrer les exercices
+    from ..api.exercises import load_exercises
+
+    all_exercises = load_exercises()
+    filtered_exercises = filter_exercises(
+        exercises=all_exercises,
+        no_jump=workout.config.no_jump,
+        intensity_levels=workout.config.exercice_intensity_levels,
+    )
+
+    # 3. Calculer le nombre total d'exercices possibles dans la session
+    work_time = workout.config.intervals.get("work_time", 40)
+    rest_time = workout.config.intervals.get("rest_time", 20)
+    interval_duration = work_time + rest_time  # ex: 60s
+
+    total_exercises_capacity = workout.total_duration // interval_duration
+
+    # 4. Calculer combien d'exercices pour les blocs thématiques
+    num_blocks = len(block_config.themes)
+    exercises_per_complete_block = (
+        block_config.exercises_per_block * block_config.repetitions_per_block
+    )
+    total_exercises_in_blocks = num_blocks * exercises_per_complete_block
+
+    # 5. Vérifier que les blocs rentrent dans la durée
+    if total_exercises_in_blocks > total_exercises_capacity:
+        raise ValueError(
+            f"Configuration impossible : les blocs nécessitent {total_exercises_in_blocks} exercices "
+            f"mais la durée permet seulement {total_exercises_capacity} exercices. "
+            f"Réduisez le nombre de blocs, d'exercices par bloc, ou de répétitions."
+        )
+
+    # 6. Générer chaque bloc
+    workout_exercises = []
+    order_index = 0
+
+    for theme in block_config.themes:
+        # Filtrer les exercices par thème
+        theme_exercises = filter_exercises_by_theme(filtered_exercises, theme)
+
+        # Sélectionner N exercices différents pour ce bloc
+        block_exercises = select_diverse_exercises(
+            theme_exercises, count=block_config.exercises_per_block
+        )
+
+        # Répéter le bloc X fois
+        for rep in range(block_config.repetitions_per_block):
+            for exercise in block_exercises:
+                workout_exercise = WorkoutExercise(
+                    exercise_id=exercise.id,
+                    order_index=order_index,
+                    custom_duration=None,
+                )
+                workout_exercises.append(workout_exercise)
+                order_index += 1
+
+    # 7. Remplir le temps restant avec des finishers
+    exercises_remaining = total_exercises_capacity - len(workout_exercises)
+
+    if block_config.fill_remaining_with_finishers and exercises_remaining > 0:
+        finishers = select_finisher_exercises(
+            filtered_exercises,
+            themes=block_config.finisher_themes,
+            count=exercises_remaining,
+        )
+
+        for finisher in finishers:
+            workout_exercises.append(
+                WorkoutExercise(
+                    exercise_id=finisher.id,
+                    order_index=order_index,
+                    custom_duration=None,
+                )
+            )
+            order_index += 1
+
+    return workout_exercises
