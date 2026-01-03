@@ -16,11 +16,24 @@ class AccessTier(str, Enum):
     PREMIUM = "premium"
 
 
+class Laterality(str, Enum):
+    """Latéralité d'un exercice : bilateral (symétrique), left ou right"""
+
+    BILATERAL = "bilateral"
+    LEFT = "left"
+    RIGHT = "right"
+
+
 class ExerciseMetadata(BaseModel):
     muscles_targeted: Optional[List[str]] = None
     equipment_needed: Optional[List[str]] = None
     calories_per_min: Optional[float] = None
     alternative_exercises: Optional[List[UUID]] = None
+    laterality: Optional[Laterality] = Field(default=Laterality.BILATERAL)
+    symmetric_exercise_id: Optional[str] = Field(
+        default=None,
+        description="UUID de l'exercice symétrique (pour exercices left/right)",
+    )
 
 
 class Exercise(BaseModel):
