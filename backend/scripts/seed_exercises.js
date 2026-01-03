@@ -7,8 +7,11 @@
  * Prérequis:
  *   - Variables d'environnement configurées dans backend/.env
  *   - Table 'exercises' créée (via migration)
- *   - Vidéos uploadées dans Supabase Storage
- *   - Fichier video_urls_mapping.json généré par upload_videos_to_supabase.js
+ *   - Vidéos uploadées dans Supabase Storage (format: nom_720p.mp4)
+ *
+ * Note:
+ *   Les chemins locaux dans exercises.json sont automatiquement convertis
+ *   en URLs Supabase Storage (pas besoin de video_urls_mapping.json)
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -22,7 +25,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Chemins des fichiers
 const EXERCISES_JSON_PATH = path.join(__dirname, '../scripts/exercises.json');
-const VIDEO_MAPPING_PATH = path.join(__dirname, 'video_urls_mapping.json');
 
 // Validation des variables d'environnement
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -39,20 +41,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     persistSession: false
   }
 });
-
-/**
- * Charge le mapping des URLs vidéos
- */
-function loadVideoMapping() {
-  if (!fs.existsSync(VIDEO_MAPPING_PATH)) {
-    console.warn('⚠️  Fichier video_urls_mapping.json introuvable');
-    console.warn('   Exécutez d\'abord: node backend/scripts/upload_videos_to_supabase.js');
-    return {};
-  }
-
-  const content = fs.readFileSync(VIDEO_MAPPING_PATH, 'utf-8');
-  return JSON.parse(content);
-}
 
 /**
  * Charge les exercices depuis exercises.json
@@ -76,23 +64,45 @@ function extractFilename(videoPath) {
 }
 
 /**
+ * Convertit un chemin local en URL Supabase Storage
+ * Transforme: /path/to/video.mov -> https://[...]/storage/v1/object/public/exercise-videos/video_720p.mp4
+ */
+function convertLocalPathToSupabaseUrl(localPath) {
+  if (!localPath) return null;
+
+  // Si c'est déjà une URL Supabase, la retourner telle quelle
+  if (localPath.startsWith('http')) {
+    return localPath;
+  }
+
+  // Extraire le nom de fichier sans extension
+  const filename = path.basename(localPath);
+  const basename = path.basename(filename, path.extname(filename));
+
+  // Construire l'URL Supabase avec le format 720p
+  // Les vidéos uploadées ont le suffixe _720p.mp4
+  const supabaseVideoName = `${basename}_720p.mp4`;
+  const supabaseUrl = `${SUPABASE_URL}/storage/v1/object/public/exercise-videos/${supabaseVideoName}`;
+
+  return supabaseUrl;
+}
+
+/**
  * Mappe un exercice JSON vers le format Supabase
  */
-function mapExerciseToSupabase(exercise, videoMapping) {
+function mapExerciseToSupabase(exercise) {
+  // Convertir automatiquement le chemin local en URL Supabase
+  const supabaseUrl = convertLocalPathToSupabaseUrl(exercise.video_url);
   const filename = extractFilename(exercise.video_url);
-  const supabaseUrl = videoMapping[filename];
 
-  if (!supabaseUrl) {
-    console.warn(`⚠️  URL Supabase introuvable pour: ${filename}`);
-    console.warn(`   Utilisation du chemin local par défaut`);
-  }
+  console.log(`🔄 ${filename} -> ${path.basename(supabaseUrl)}`);
 
   return {
     id: exercise.id,
     name: exercise.name,
     description: exercise.description,
     icon: exercise.icon,
-    video_url: supabaseUrl || exercise.video_url,  // Fallback sur chemin local
+    video_url: supabaseUrl,
     default_duration: exercise.default_duration,
     difficulty: exercise.difficulty,
     has_jump: exercise.has_jump,
@@ -138,11 +148,6 @@ async function insertExercise(exercise) {
 async function main() {
   console.log('🚀 Seed des exercices dans Supabase PostgreSQL\n');
 
-  // Charger le mapping des URLs vidéos
-  console.log('📹 Chargement du mapping vidéos...');
-  const videoMapping = loadVideoMapping();
-  console.log(`   ${Object.keys(videoMapping).length} vidéo(s) mappée(s)\n`);
-
   // Charger les exercices depuis JSON
   console.log('📂 Chargement des exercices depuis exercises.json...');
   const exercises = loadExercises();
@@ -155,7 +160,7 @@ async function main() {
   let failCount = 0;
 
   for (const exercise of exercises) {
-    const mappedExercise = mapExerciseToSupabase(exercise, videoMapping);
+    const mappedExercise = mapExerciseToSupabase(exercise);
     const success = await insertExercise(mappedExercise);
 
     if (success) {

@@ -8,6 +8,7 @@
  * Options:
  *   --no-convert    Skip la conversion et upload les fichiers originaux
  *   --keep-temp     Garde les fichiers temporaires après conversion
+ *   --no-archive    Ne déplace pas les vidéos vers videos_archives après upload
  *
  * Prérequis:
  *   - Variables d'environnement configurées dans backend/.env
@@ -33,6 +34,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET_NAME = 'exercise-videos';
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.join(__dirname, '../../videos');
+const ARCHIVE_DIR = path.join(__dirname, '../../videos_archives');
 
 // Configuration de conversion 720p
 const CONVERSION_CONFIG = {
@@ -49,6 +51,11 @@ const CONVERSION_CONFIG = {
     gopSize: '30',
     resolution: '1280:720',
   }
+};
+
+// Configuration d'archivage
+const ARCHIVE_CONFIG = {
+  enabled: !process.argv.includes('--no-archive')
 };
 
 // Validation des variables d'environnement
@@ -92,6 +99,29 @@ function getVideoInfo(videoPath) {
   } catch (error) {
     console.error(`   ⚠️  Impossible d'obtenir les infos vidéo: ${error.message}`);
     return null;
+  }
+}
+
+/**
+ * Déplace un fichier vidéo vers le dossier d'archives
+ */
+function moveToArchive(sourcePath, archiveDir) {
+  try {
+    // Créer le dossier d'archives s'il n'existe pas
+    if (!fs.existsSync(archiveDir)) {
+      fs.mkdirSync(archiveDir, { recursive: true });
+    }
+
+    const filename = path.basename(sourcePath);
+    const destinationPath = path.join(archiveDir, filename);
+
+    // Déplacer le fichier
+    fs.renameSync(sourcePath, destinationPath);
+    console.log(`   📦 Archivé: ${filename} -> videos_archives/`);
+    return true;
+  } catch (error) {
+    console.error(`   ⚠️  Erreur lors de l'archivage: ${error.message}`);
+    return false;
   }
 }
 
@@ -257,7 +287,8 @@ async function uploadVideo(localPath, remotePath, skipConversion = false) {
       uploadedFile: path.basename(fileToUpload),
       originalSize: originalStats.size,
       uploadedSize: stats.size,
-      converted: shouldConvert && conversionResult?.success
+      converted: shouldConvert && conversionResult?.success,
+      localPath: localPath
     };
 
   } catch (error) {
@@ -273,7 +304,8 @@ async function main() {
   console.log('🚀 Upload des vidéos vers Supabase Storage\n');
   console.log(`📁 Dossier local: ${PROJECT_ROOT}`);
   console.log(`🪣 Bucket: ${BUCKET_NAME}`);
-  console.log(`🔄 Conversion 720p: ${CONVERSION_CONFIG.enabled ? 'Activée' : 'Désactivée'}\n`);
+  console.log(`🔄 Conversion 720p: ${CONVERSION_CONFIG.enabled ? 'Activée' : 'Désactivée'}`);
+  console.log(`📦 Archivage auto: ${ARCHIVE_CONFIG.enabled ? 'Activé (videos -> videos_archives)' : 'Désactivé'}\n`);
 
   // Vérifier FFmpeg si la conversion est activée
   if (CONVERSION_CONFIG.enabled) {
@@ -329,6 +361,11 @@ async function main() {
       totalUploadedSize += result.uploadedSize;
       if (result.converted) {
         convertedCount++;
+      }
+
+      // Déplacer le fichier vers archives après upload réussi (si activé)
+      if (ARCHIVE_CONFIG.enabled) {
+        moveToArchive(result.localPath, ARCHIVE_DIR);
       }
     }
 
