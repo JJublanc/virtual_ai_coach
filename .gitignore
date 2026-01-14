@@ -44,7 +44,7 @@ docs/sumo_squates/
 docs/superman_pull/
 exercices_generation/archives/
 logs/
-videos/
+# videos/
 videos_archives/
 videos_generated/
 workout_generation.log

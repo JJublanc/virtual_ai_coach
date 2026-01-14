@@ -54,6 +54,12 @@ class WorkoutConfig(BaseModel):
     show_progress_bar: bool = True
     show_exercise_name: bool = True
 
+    # Filtre par type d'exercice
+    exercise_type: Optional[str] = Field(
+        default=None,
+        description="Type d'exercice spécifique (burpee, jump, run, push_ups, plank, squat, crunch)",
+    )
+
     # Configuration pour structure en blocs thématiques
     use_block_structure: bool = Field(
         default=False,

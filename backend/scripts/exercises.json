@@ -19,6 +19,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -45,6 +46,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.5,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "upper_body"
@@ -71,6 +73,7 @@
             "equipment_needed": [],
             "calories_per_min": 9.0,
             "laterality": "bilateral",
+            "exercise_type": "run",
             "themes": [
                 "abs",
                 "cardio",
@@ -98,6 +101,7 @@
             "equipment_needed": [],
             "calories_per_min": 5.5,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -124,6 +128,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.0,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -151,6 +156,7 @@
             "equipment_needed": [],
             "calories_per_min": 4.0,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -178,6 +184,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -204,6 +211,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -231,6 +239,7 @@
             "equipment_needed": [],
             "calories_per_min": 10.0,
             "laterality": "bilateral",
+            "exercise_type": "burpee",
             "themes": [
                 "abs",
                 "cardio",
@@ -258,6 +267,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.5,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -284,6 +294,7 @@
             "equipment_needed": [],
             "calories_per_min": 5.0,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -311,6 +322,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.5,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -338,6 +350,7 @@
             "equipment_needed": [],
             "calories_per_min": 9.5,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "cardio",
@@ -364,6 +377,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.5,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs"
             ]
@@ -389,6 +403,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -414,6 +429,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -440,6 +456,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.0,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "cardio",
@@ -468,6 +485,7 @@
             "equipment_needed": [],
             "calories_per_min": 5.0,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "full_body",
@@ -495,6 +513,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.5,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -523,6 +542,7 @@
             "equipment_needed": [],
             "calories_per_min": 9.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "cardio",
@@ -551,6 +571,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -576,6 +597,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.0,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -602,6 +624,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.5,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -630,6 +653,7 @@
             "calories_per_min": 7.0,
             "laterality": "left",
             "symmetric_exercise_id": "b6c7d8e9-0f1a-2b3c-4d5e-6f7a8b9c0d1e",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "upper_body"
@@ -656,6 +680,7 @@
             "calories_per_min": 7.0,
             "laterality": "right",
             "symmetric_exercise_id": "a5b6c7d8-9e0f-1a2b-3c4d-5e6f7a8b9c0d",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "upper_body"
@@ -683,6 +708,7 @@
             "calories_per_min": 6.5,
             "laterality": "right",
             "symmetric_exercise_id": "d8e9f0a1-2b3c-4d5e-6f7a-8b9c0d1e2f3a",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -710,6 +736,7 @@
             "calories_per_min": 6.5,
             "laterality": "left",
             "symmetric_exercise_id": "c7d8e9f0-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -737,6 +764,7 @@
             "calories_per_min": 7.5,
             "laterality": "left",
             "symmetric_exercise_id": "f0a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -764,6 +792,7 @@
             "calories_per_min": 7.5,
             "laterality": "right",
             "symmetric_exercise_id": "e9f0a1b2-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -789,6 +818,7 @@
             "equipment_needed": [],
             "calories_per_min": 5.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -815,6 +845,7 @@
             "equipment_needed": [],
             "calories_per_min": 10.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "cardio",
@@ -843,6 +874,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.0,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -869,6 +901,7 @@
             "equipment_needed": [],
             "calories_per_min": 6.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "legs"
@@ -895,6 +928,7 @@
             "equipment_needed": [],
             "calories_per_min": 5.5,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -922,6 +956,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.5,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "cardio",
@@ -950,6 +985,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.5,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "upper_body"
@@ -976,6 +1012,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.0,
             "laterality": "bilateral",
+            "exercise_type": "push_ups",
             "themes": [
                 "abs",
                 "upper_body"
@@ -1003,6 +1040,7 @@
             "equipment_needed": [],
             "calories_per_min": 10.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "cardio",
@@ -1031,6 +1069,7 @@
             "equipment_needed": [],
             "calories_per_min": 9.5,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "cardio",
@@ -1060,6 +1099,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.5,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "abs",
                 "cardio",
@@ -1089,6 +1129,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "push_ups",
             "themes": [
                 "abs",
                 "upper_body"
@@ -1115,6 +1156,7 @@
             "equipment_needed": [],
             "calories_per_min": 9.0,
             "laterality": "bilateral",
+            "exercise_type": "plank",
             "themes": [
                 "abs",
                 "full_body",
@@ -1143,6 +1185,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.5,
             "laterality": "bilateral",
+            "exercise_type": "push_ups",
             "themes": [
                 "abs",
                 "upper_body"
@@ -1169,6 +1212,7 @@
             "equipment_needed": [],
             "calories_per_min": 8.5,
             "laterality": "bilateral",
+            "exercise_type": "jump",
             "themes": [
                 "cardio",
                 "legs"
@@ -1195,6 +1239,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.5,
             "laterality": "bilateral",
+            "exercise_type": "squat",
             "themes": [
                 "abs",
                 "full_body",
@@ -1223,6 +1268,7 @@
             "equipment_needed": [],
             "calories_per_min": 7.0,
             "laterality": "bilateral",
+            "exercise_type": "crunch",
             "themes": [
                 "abs",
                 "legs"
@@ -1249,6 +1295,282 @@
             "equipment_needed": [],
             "calories_per_min": 9.0,
             "laterality": "bilateral",
+            "exercise_type": "jump",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "legs",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "a1a2a3a4-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+        "name": "Burpee",
+        "description": "The classic burpee: squat down, jump back to plank, do a push-up, jump feet forward, and explode into a vertical jump.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "shoulders",
+                "legs",
+                "chest"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 10.0,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "b2b3b4b5-2c3d-4e5f-6a7b-8c9d0e1f2a3b",
+        "name": "Chest-to-Floor Burpee",
+        "description": "Dropping your entire body to the mat for a full range of motion. Lower your chest completely to the floor before pushing back up.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_chest_on_the_floor.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "chest",
+                "shoulders",
+                "legs"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 10.5,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "c3c4c5c6-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+        "name": "Tuck Jump Burpee",
+        "description": "Explode upward at the end of the burpee and pull your knees to your chest in a tuck jump.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_tuck_jump.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "legs",
+                "shoulders",
+                "hip_flexors"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 11.0,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "legs",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "d4d5d6d7-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Tuck Jump Burpee with Squat",
+        "description": "Explode upward at the end and pull your knees to your chest in a tuck jump, then add a squat afterward.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_tuck_jump_squat.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "quadriceps",
+                "glutes",
+                "shoulders"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 11.5,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "legs",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "e5e6e7e8-5f6a-7b8c-9d0e-1f2a3b4c5d6e",
+        "name": "Burpee Squat",
+        "description": "Burpee, but instead of jumping after the push-up, execute a squat.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_squat.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": false,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "quadriceps",
+                "glutes",
+                "chest"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 9.5,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "legs",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "f6f7f8f9-6a7b-8c9d-0e1f-2a3b4c5d6e7f",
+        "name": "Burpee Plank",
+        "description": "Burpee, but replace the push-up by just holding a plank position.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_plank.mov",
+        "default_duration": 60,
+        "difficulty": "medium",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "shoulders",
+                "legs"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 9.0,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "a7a8a9a0-7b8c-9d0e-1f2a-3b4c5d6e7f8a",
+        "name": "Burpee Jump 360 Degrees",
+        "description": "Burpee adding a 360-degree rotation jump instead of just a vertical jump.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_jump_360_degrees.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "legs",
+                "shoulders",
+                "chest"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 11.0,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "legs",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "b8b9b0b1-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
+        "name": "Burpee Double Push-Ups",
+        "description": "Burpee with 2 push-ups at each repetition instead of just one.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_double_push-ups.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "chest",
+                "triceps",
+                "shoulders",
+                "legs"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 11.0,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
+            "themes": [
+                "abs",
+                "cardio",
+                "full_body",
+                "upper_body"
+            ]
+        }
+    },
+    {
+        "id": "c9c0c1c2-9d0e-1f2a-3b4c-5d6e7f8a9b0c",
+        "name": "Burpee Climber",
+        "description": "Burpee, but execute a mountain climber movement instead of the push-up.",
+        "icon": "🦸",
+        "video_url": "/Users/jjublanc/projets_perso/virtual_ai_coach/videos/burpee_climber.mov",
+        "default_duration": 60,
+        "difficulty": "hard",
+        "has_jump": true,
+        "access_tier": "free",
+        "metadata": {
+            "muscles_targeted": [
+                "full_body",
+                "core",
+                "hip_flexors",
+                "shoulders",
+                "legs"
+            ],
+            "equipment_needed": [],
+            "calories_per_min": 10.5,
+            "laterality": "bilateral",
+            "exercise_type": "burpee",
             "themes": [
                 "abs",
                 "cardio",

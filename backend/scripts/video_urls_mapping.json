@@ -1,3 +1,11 @@
 {
-  "back_legs_lifts.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/back_legs_lifts_720p.mp4"
+  "burpee.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_720p.mp4",
+  "burpee_chest_on_the_floor.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_chest_on_the_floor_720p.mp4",
+  "burpee_climber.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_climber_720p.mp4",
+  "burpee_double_push-ups.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_double_push-ups_720p.mp4",
+  "burpee_jump_360_degrees.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_jump_360_degrees_720p.mp4",
+  "burpee_plank.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_plank_720p.mp4",
+  "burpee_squat.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_squat_720p.mp4",
+  "burpee_tuck_jump.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_tuck_jump_720p.mp4",
+  "burpee_tuck_jump_squat.mov": "https://lbtikhyjwzzfavzoqnyr.supabase.co/storage/v1/object/public/exercise-videos/burpee_tuck_jump_squat_720p.mp4"
 }
