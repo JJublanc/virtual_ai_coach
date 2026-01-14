@@ -71,7 +71,10 @@ def load_exercises_from_json() -> List[Exercise]:
 
 
 def filter_exercises(
-    exercises: List[Exercise], no_jump: bool, intensity_levels: List[Difficulty]
+    exercises: List[Exercise],
+    no_jump: bool,
+    intensity_levels: List[Difficulty],
+    exercise_type: Optional[str] = None,
 ) -> List[Exercise]:
     """
     Filtre les exercices selon les critères de configuration.
@@ -80,6 +83,7 @@ def filter_exercises(
         exercises: Liste complète des exercices disponibles
         no_jump: Si True, exclut les exercices avec has_jump=True
         intensity_levels: Liste des niveaux de difficulté acceptés
+        exercise_type: Type d'exercice spécifique (burpee, jump, run, push_ups, plank, squat, crunch)
 
     Returns:
         List[Exercise]: Exercices correspondant aux critères
@@ -100,6 +104,16 @@ def filter_exercises(
     """
     filtered = exercises
 
+    # Filtrage par type d'exercice
+    if exercise_type:
+        filtered = [
+            ex
+            for ex in filtered
+            if ex.metadata
+            and hasattr(ex.metadata, "exercise_type")
+            and ex.metadata.exercise_type == exercise_type
+        ]
+
     # Filtrage par sauts
     if no_jump:
         filtered = [ex for ex in filtered if not ex.has_jump]
@@ -110,11 +124,10 @@ def filter_exercises(
 
     # Validation du pool résultant
     if not filtered:
-        raise ValueError(
-            f"Aucun exercice trouvé pour les critères : "
-            f"no_jump={no_jump}, "
-            f"intensity_levels={[level.value for level in intensity_levels]}"
-        )
+        criteria = f"no_jump={no_jump}, intensity_levels={[level.value for level in intensity_levels]}"
+        if exercise_type:
+            criteria += f", exercise_type={exercise_type}"
+        raise ValueError(f"Aucun exercice trouvé pour les critères : {criteria}")
 
     return filtered
 
@@ -142,32 +155,31 @@ def generate_random_exercises(
     exercises_pool: List[Exercise], count: int
 ) -> List[Exercise]:
     """
-    Tire aléatoirement des exercices depuis un pool en évitant que le même exercice
-    apparaisse parmi les 2 exercices précédents.
+    Tire aléatoirement des exercices depuis un pool SANS REMISE.
+
+    Principe :
+    - Tirage sans remise : un exercice tiré est retiré du pool temporaire
+    - Quand le pool est vide, il est réinitialisé avec tous les exercices du pool initial
+    - Les paires unilatérales (left/right) sont TOUJOURS ajoutées ensemble et comptent pour 2 exercices
+    - La dernière position DOIT être un exercice bilatéral
 
     Gestion de la latéralité :
-    - Si un exercice "left" ou "right" est tiré, l'exercice suivant DOIT être son symétrique
-    - Si un exercice latéral est tiré en dernière position, il est remplacé par un bilateral
+    - Si un exercice unilatéral (left/right) est tiré :
+        * EN DERNIÈRE POSITION : on le rejette et on tire un exercice bilatéral
+        * AUTRES POSITIONS : on ajoute immédiatement son symétrique et on retire les 2 du pool
 
     Args:
-        exercises_pool: Pool d'exercices éligibles
+        exercises_pool: Pool d'exercices éligibles (pool initial)
         count: Nombre d'exercices à tirer
 
     Returns:
-        List[Exercise]: Exercices sélectionnés avec alternance left/right garantie
-
-    Note:
-        Évite qu'un exercice soit identique à l'un des 2 exercices précédents.
-        Si le pool contient moins de 3 exercices, cette contrainte peut être
-        partiellement respectée selon le nombre d'exercices disponibles.
+        List[Exercise]: Exercices sélectionnés (peut contenir des paires unilatérales)
 
     Example:
-        >>> pool = [ex1, ex2, ex3, ex4]
+        >>> pool = [ex1_bilateral, ex2_left, ex2_right, ex3_bilateral]
         >>> selected = generate_random_exercises(pool, count=10)
-        >>> # Vérifier qu'aucun exercice n'est identique aux 2 précédents
-        >>> for i in range(2, len(selected)):
-        ...     assert selected[i].id != selected[i-1].id
-        ...     assert selected[i].id != selected[i-2].id
+        >>> # Les exercices ne se répètent pas tant que le pool n'est pas épuisé
+        >>> # Les paires left/right sont toujours consécutives
     """
     if count <= 0:
         return []
@@ -175,98 +187,116 @@ def generate_random_exercises(
     if not exercises_pool:
         raise ValueError("Le pool d'exercices est vide")
 
-    # Si moins de 3 exercices dans le pool, on ne peut pas garantir la contrainte
-    # mais on fait de notre mieux
-    if len(exercises_pool) < 3:
-        # Pour 1 ou 2 exercices, on alterne simplement
-        if len(exercises_pool) == 1:
-            return exercises_pool * count
-        else:  # 2 exercices
-            result = []
-            for i in range(count):
-                result.append(exercises_pool[i % 2])
-            return result
+    # Pool initial (référence pour réinitialisation)
+    initial_pool = exercises_pool.copy()
+
+    # Pool disponible (sera modifié au fil des tirages)
+    available_pool = exercises_pool.copy()
 
     selected_exercises = []
-    must_use_symmetric = (
-        False  # Flag pour forcer l'utilisation d'un exercice symétrique
-    )
-    expected_exercise = None  # L'exercice symétrique attendu
 
-    for i in range(count):
-        # Si on doit utiliser un exercice symétrique
-        if must_use_symmetric and expected_exercise:
-            exercise = expected_exercise
-            must_use_symmetric = False
-            expected_exercise = None
-        else:
-            if i < 2:
-                # Pour les 2 premiers exercices : tirage aléatoire simple
-                # mais on évite quand même le précédent si i == 1
-                if i == 0:
-                    exercise = random.choice(exercises_pool)
-                else:  # i == 1
-                    previous = selected_exercises[0]
-                    available_pool = [
-                        ex for ex in exercises_pool if ex.id != previous.id
-                    ]
-                    exercise = random.choice(available_pool)
-            else:
-                # Pour les exercices suivants : éviter les 2 précédents
-                prev_1 = selected_exercises[-1]
-                prev_2 = selected_exercises[-2]
+    while len(selected_exercises) < count:
+        # Réinitialiser le pool s'il est vide
+        if not available_pool:
+            available_pool = initial_pool.copy()
 
-                # Créer un pool sans les 2 exercices précédents
-                available_pool = [
-                    ex
-                    for ex in exercises_pool
-                    if ex.id != prev_1.id and ex.id != prev_2.id
-                ]
+        # Calculer combien d'exercices il reste à tirer
+        remaining = count - len(selected_exercises)
 
-                # Tirer un exercice du pool filtré
-                exercise = random.choice(available_pool)
+        # Si c'est la dernière position, on doit tirer un exercice bilatéral
+        if remaining == 1:
+            # Filtrer pour ne garder que les exercices bilatéraux
+            bilateral_pool = [
+                ex
+                for ex in available_pool
+                if not ex.metadata or ex.metadata.laterality == Laterality.BILATERAL
+            ]
 
-        # Vérifier si l'exercice a une latéralité left ou right
-        if exercise.metadata and exercise.metadata.laterality in [
-            Laterality.LEFT,
-            Laterality.RIGHT,
-        ]:
-            # Si c'est le dernier exercice, le remplacer par un bilateral
-            if i == count - 1:
-                # Chercher un exercice bilateral
+            # Si aucun exercice bilatéral disponible, réinitialiser et filtrer à nouveau
+            if not bilateral_pool:
+                available_pool = initial_pool.copy()
                 bilateral_pool = [
                     ex
-                    for ex in exercises_pool
+                    for ex in available_pool
                     if not ex.metadata or ex.metadata.laterality == Laterality.BILATERAL
                 ]
 
-                # Exclure aussi les 2 précédents si possible
-                if i >= 2:
-                    prev_1 = selected_exercises[-1]
-                    prev_2 = selected_exercises[-2]
+            # Si toujours aucun exercice bilatéral, prendre n'importe lequel
+            if not bilateral_pool:
+                bilateral_pool = available_pool
+
+            exercise = random.choice(bilateral_pool)
+            selected_exercises.append(exercise)
+
+            # Retirer du pool disponible
+            available_pool = [ex for ex in available_pool if ex.id != exercise.id]
+
+        else:
+            # Tirer un exercice aléatoire
+            exercise = random.choice(available_pool)
+
+            # Vérifier si c'est un exercice unilatéral
+            if exercise.metadata and exercise.metadata.laterality in [
+                Laterality.LEFT,
+                Laterality.RIGHT,
+            ]:
+                # Si c'est un unilatéral, on doit aussi ajouter son symétrique
+                # MAIS seulement s'il reste au moins 2 places
+                if remaining >= 2:
+                    # Trouver l'exercice symétrique
+                    symmetric = None
+                    if exercise.metadata.symmetric_exercise_id:
+                        symmetric = find_exercise_by_id(
+                            exercise.metadata.symmetric_exercise_id, available_pool
+                        )
+
+                        # Si le symétrique n'est pas dans le pool, le chercher dans le pool initial
+                        if not symmetric:
+                            symmetric = find_exercise_by_id(
+                                exercise.metadata.symmetric_exercise_id, initial_pool
+                            )
+
+                    if symmetric:
+                        # Ajouter les deux exercices (la paire complète)
+                        selected_exercises.append(exercise)
+                        selected_exercises.append(symmetric)
+
+                        # Retirer les deux du pool disponible
+                        available_pool = [
+                            ex
+                            for ex in available_pool
+                            if ex.id != exercise.id and ex.id != symmetric.id
+                        ]
+                    else:
+                        # Pas de symétrique trouvé, ajouter juste l'exercice
+                        selected_exercises.append(exercise)
+                        available_pool = [
+                            ex for ex in available_pool if ex.id != exercise.id
+                        ]
+                else:
+                    # Il ne reste qu'une place mais on a tiré un unilatéral
+                    # On le rejette et on tire un bilatéral
                     bilateral_pool = [
                         ex
-                        for ex in bilateral_pool
-                        if ex.id != prev_1.id and ex.id != prev_2.id
+                        for ex in available_pool
+                        if not ex.metadata
+                        or ex.metadata.laterality == Laterality.BILATERAL
                     ]
-                elif i == 1:
-                    prev_1 = selected_exercises[-1]
-                    bilateral_pool = [ex for ex in bilateral_pool if ex.id != prev_1.id]
 
-                if bilateral_pool:
-                    exercise = random.choice(bilateral_pool)
-                # Sinon, garder l'exercice même s'il est latéral
+                    if bilateral_pool:
+                        exercise = random.choice(bilateral_pool)
+                    # Sinon on garde l'exercice unilatéral tiré
+
+                    selected_exercises.append(exercise)
+                    available_pool = [
+                        ex for ex in available_pool if ex.id != exercise.id
+                    ]
             else:
-                # Chercher l'exercice symétrique via symmetric_exercise_id
-                if exercise.metadata.symmetric_exercise_id:
-                    symmetric = find_exercise_by_id(
-                        exercise.metadata.symmetric_exercise_id, exercises_pool
-                    )
-                    if symmetric:
-                        must_use_symmetric = True
-                        expected_exercise = symmetric
+                # C'est un exercice bilatéral, on l'ajoute simplement
+                selected_exercises.append(exercise)
 
-        selected_exercises.append(exercise)
+                # Retirer du pool disponible
+                available_pool = [ex for ex in available_pool if ex.id != exercise.id]
 
     return selected_exercises
 
@@ -327,7 +357,7 @@ def _generate_workout_classic(workout: Workout) -> List[WorkoutExercise]:
 
     Cette fonction orchestre le processus de génération classique :
     1. Charge tous les exercices disponibles
-    2. Filtre selon les critères (no_jump, intensity_levels)
+    2. Filtre selon les critères (no_jump, intensity_levels, exercise_type)
     3. Calcule le nombre d'exercices nécessaires
     4. Tire aléatoirement avec remise
     5. Crée les WorkoutExercise avec order_index séquentiel
@@ -356,6 +386,7 @@ def _generate_workout_classic(workout: Workout) -> List[WorkoutExercise]:
         exercises=all_exercises,
         no_jump=workout.config.no_jump,
         intensity_levels=workout.config.exercice_intensity_levels,
+        exercise_type=workout.config.exercise_type,
     )
 
     # 3. Calculer le nombre d'exercices nécessaires
