@@ -24,6 +24,16 @@ class Laterality(str, Enum):
     RIGHT = "right"
 
 
+class ExerciseTheme(str, Enum):
+    """Thèmes d'exercices pour organisation en blocs thématiques"""
+
+    UPPER_BODY = "upper_body"  # Haut du corps
+    LEGS = "legs"  # Jambes
+    CARDIO = "cardio"  # Cardio
+    ABS = "abs"  # Abdos
+    FULL_BODY = "full_body"  # Corps entier (multi-thème)
+
+
 class ExerciseMetadata(BaseModel):
     muscles_targeted: Optional[List[str]] = None
     equipment_needed: Optional[List[str]] = None
@@ -33,6 +43,10 @@ class ExerciseMetadata(BaseModel):
     symmetric_exercise_id: Optional[str] = Field(
         default=None,
         description="UUID de l'exercice symétrique (pour exercices left/right)",
+    )
+    themes: List[ExerciseTheme] = Field(
+        default=[ExerciseTheme.FULL_BODY],
+        description="Thèmes de l'exercice pour organisation en blocs thématiques",
     )
 
 
