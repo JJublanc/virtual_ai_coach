@@ -423,24 +423,30 @@ def generate_workout_with_intervals(
     """
     Génère la liste de segments d'overlay synchronisés avec la timeline vidéo réelle.
 
-    IMPORTANT : La vidéo ne contient QUE les exercices (pas de breaks).
-    Les overlays de break sont affichés PAR-DESSUS le début de l'exercice suivant.
+    IMPORTANT : Chaque exercice dans la vidéo dure work_time + rest_time (ex: 40 + 20 = 60s).
+    Les overlays créent visuellement les temps de pause et les previews.
 
-    Timeline réelle pour work_time=40s, rest_time=20s :
+    Timeline réelle pour work_time=40s, rest_time=20s (exercices de 60s chacun) :
 
-    EXERCICE 1 (vidéo 0-40s) :
+    EXERCICE 1 (vidéo 0-60s) :
     - 0-5s : Warning overlay
-    - 5-40s : No overlay
+    - 5-45s : No overlay (40s d'exercice visible)
+    - 45-60s : Break classic overlay (15s)
 
-    EXERCICE 2 (vidéo 40-80s) :
-    - 40-55s : Break classic overlay (affiché pendant les 15 premières secondes de l'exercice 2)
-    - 55-60s : Break transparent overlay (preview, vidéo visible dessous)
-    - 60-80s : No overlay
+    EXERCICE 2 (vidéo 60-120s) :
+    - 60-65s : Break transparent overlay (5s) - preview, vidéo visible dessous
+    - 65-105s : No overlay (40s d'exercice visible)
+    - 105-120s : Break classic overlay (15s)
 
-    EXERCICE 3 (vidéo 80-120s) :
-    - 80-95s : Break classic overlay
-    - 95-100s : Break transparent overlay
-    - 100-120s : No overlay
+    EXERCICE 3 (vidéo 120-180s) :
+    - 120-125s : Break transparent overlay (5s)
+    - 125-165s : No overlay (40s d'exercice visible)
+    - 165-180s : Break classic overlay (15s)
+
+    DERNIER EXERCICE :
+    - 0-5s : Preview overlay
+    - 5-45s : No overlay (40s)
+    - 45-60s : rien (fin du workout)
 
     Args:
         exercises: Liste des exercices à inclure dans le workout
@@ -453,22 +459,24 @@ def generate_workout_with_intervals(
         >>> exercises = [exercise1, exercise2, exercise3]
         >>> config = WorkoutConfig(intervals={"work_time": 40, "rest_time": 20})
         >>> result = generate_workout_with_intervals(exercises, config)
-        >>> # Total durée = 120s (seulement les exercices, pas les breaks virtuels)
+        >>> # Total durée = 180s (3 exercices × 60s chacun)
     """
     work_time = config.intervals.get("work_time", 40)
     rest_time = config.intervals.get("rest_time", 20)
 
     PREVIEW_DURATION = 5  # Durée de la preview transparente
     WARNING_DURATION = 5  # Durée du warning initial
+    BREAK_CLASSIC_DURATION = rest_time - PREVIEW_DURATION  # 20 - 5 = 15s
 
     workout_items = []
     order = 0
 
     for idx, exercise in enumerate(exercises):
         is_first = idx == 0
+        is_last = idx == len(exercises) - 1
 
         if is_first:
-            # EXERCICE 1 : Warning (5s) + No overlay (35s)
+            # EXERCICE 1 : Warning (5s) + No overlay (40s) + Break classic (15s)
             workout_items.append(
                 {
                     "name": "Get Ready!",
@@ -489,7 +497,7 @@ def generate_workout_with_intervals(
                     "name": exercise.name,
                     "description": exercise.description or f"Exercice {exercise.name}",
                     "icon": getattr(exercise, "icon", "🏋️"),
-                    "duration": work_time - WARNING_DURATION,
+                    "duration": work_time,
                     "order": order,
                     "overlay_type": "none",
                     "is_break": False,
@@ -497,28 +505,30 @@ def generate_workout_with_intervals(
                 }
             )
             order += 1
+
+            # Break classic sauf si c'est le dernier exercice
+            if not is_last:
+                workout_items.append(
+                    {
+                        "name": "Break",
+                        "description": "Période de récupération",
+                        "icon": "⏸️",
+                        "duration": BREAK_CLASSIC_DURATION,
+                        "order": order,
+                        "overlay_type": "break_classic",
+                        "is_break": True,
+                        "exercise_id": "break",
+                        "next_exercise_name": exercises[idx + 1].name
+                        if idx + 1 < len(exercises)
+                        else "",
+                        "next_exercise_duration": work_time,
+                    }
+                )
+                order += 1
         else:
-            # EXERCICES SUIVANTS : Break classic (15s) + Break transparent (5s) + No overlay (20s)
-            # Les overlays de break sont affichés PENDANT cet exercice (pas avant)
+            # EXERCICES SUIVANTS : Preview (5s) + No overlay (40s) + Break classic (15s)
 
-            # 1. Break classic overlay (rest_time - 5s) affiché au DÉBUT de cet exercice
-            workout_items.append(
-                {
-                    "name": "Break",
-                    "description": "Période de récupération",
-                    "icon": "⏸️",
-                    "duration": rest_time - PREVIEW_DURATION,
-                    "order": order,
-                    "overlay_type": "break_classic",
-                    "is_break": True,
-                    "exercise_id": "break",
-                    "next_exercise_name": exercise.name,
-                    "next_exercise_duration": work_time,
-                }
-            )
-            order += 1
-
-            # 2. Break transparent overlay (5s) - Preview de CET exercice qui démarre
+            # 1. Preview transparent overlay (5s) - fin du break, début de l'exercice
             workout_items.append(
                 {
                     "name": "Next Up",
@@ -535,13 +545,13 @@ def generate_workout_with_intervals(
             )
             order += 1
 
-            # 3. No overlay pour le reste de l'exercice
+            # 2. No overlay pour l'exercice (40s)
             workout_items.append(
                 {
                     "name": exercise.name,
                     "description": exercise.description or f"Exercice {exercise.name}",
                     "icon": getattr(exercise, "icon", "🏋️"),
-                    "duration": work_time - rest_time,  # 40 - 20 = 20s
+                    "duration": work_time,
                     "order": order,
                     "overlay_type": "none",
                     "is_break": False,
@@ -549,6 +559,26 @@ def generate_workout_with_intervals(
                 }
             )
             order += 1
+
+            # 3. Break classic (15s) sauf si c'est le dernier exercice
+            if not is_last:
+                workout_items.append(
+                    {
+                        "name": "Break",
+                        "description": "Période de récupération",
+                        "icon": "⏸️",
+                        "duration": BREAK_CLASSIC_DURATION,
+                        "order": order,
+                        "overlay_type": "break_classic",
+                        "is_break": True,
+                        "exercise_id": "break",
+                        "next_exercise_name": exercises[idx + 1].name
+                        if idx + 1 < len(exercises)
+                        else "",
+                        "next_exercise_duration": work_time,
+                    }
+                )
+                order += 1
 
     return workout_items
 

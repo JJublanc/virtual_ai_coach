@@ -354,7 +354,11 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                     BREAK
                   </h1>
                   <div className="text-7xl font-mono text-blue-400 font-bold drop-shadow-lg">
-                    {Math.floor(exerciseTimeRemaining / 60)}:{(exerciseTimeRemaining % 60).toString().padStart(2, '0')}
+                    {(() => {
+                      // Add 5 seconds to show countdown from 20 to 5 (including upcoming preview)
+                      const totalBreakTime = exerciseTimeRemaining + 5
+                      return `${Math.floor(totalBreakTime / 60)}:${(totalBreakTime % 60).toString().padStart(2, '0')}`
+                    })()}
                   </div>
                   <p className="text-3xl text-white/90 mt-6 drop-shadow-lg">
                     Recovery in progress...
@@ -367,33 +371,35 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           {/* BREAK TRANSPARENT overlay - preview of next exercise */}
           {currentExercise?.overlay_type === 'break_transparent' && (
             <div className="absolute inset-0 z-10">
-              {/* Light transparent overlay to show video underneath */}
+              {/* Transparent overlay (20% opacity = 80% transparent) to show video underneath */}
               <div className="absolute inset-0 bg-black/20" />
 
-              {/* Next exercise preview indicator - centered */}
+              {/* Next exercise indicator - top left (same position as break classic) */}
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-sm shadow-2xl">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Next up</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    {(() => {
+                      const NextIconComponent = getExerciseIcon(currentExercise.next_exercise_name || '')
+                      return <NextIconComponent className="w-6 h-6 text-green-600" />
+                    })()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg text-gray-900 truncate">{currentExercise.next_exercise_name}</h3>
+                    <p className="text-sm text-gray-600">Get ready!</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Countdown - centered and prominent for preview (5 to 0) */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 shadow-2xl max-w-lg">
-                  <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 text-center">
-                    Coming up next
+                <div className="text-center">
+                  <div className="text-8xl font-mono text-green-400 font-bold drop-shadow-2xl">
+                    {exerciseTimeRemaining}
+                  </div>
+                  <p className="text-2xl text-white/90 mt-4 drop-shadow-lg">
+                    Get ready...
                   </p>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      {(() => {
-                        const NextIconComponent = getExerciseIcon(currentExercise.next_exercise_name || '')
-                        return <NextIconComponent className="w-8 h-8 text-green-600" />
-                      })()}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-2xl text-gray-900">{currentExercise.next_exercise_name}</h3>
-                      <p className="text-lg text-gray-600">Get ready!</p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-mono text-green-600 font-bold">
-                      {exerciseTimeRemaining}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">seconds</p>
-                  </div>
                 </div>
               </div>
             </div>
