@@ -428,25 +428,33 @@ def generate_workout_with_intervals(
 
     Timeline réelle pour work_time=40s, rest_time=20s (exercices de 60s chacun) :
 
-    EXERCICE 1 (vidéo 0-60s) :
-    - 0-5s : Warning overlay
+    INTRO (vidéo 0-5s) :
+    - 0-5s : Intro overlay (avertissement sécurité)
+
+    EXERCICE 1 (vidéo 5-50s) :
     - 5-45s : No overlay (40s d'exercice visible)
-    - 45-60s : Break classic overlay (15s)
+    - 45-50s : Break classic overlay (5s)
 
-    EXERCICE 2 (vidéo 60-120s) :
-    - 60-65s : Break transparent overlay (5s) - preview, vidéo visible dessous
-    - 65-105s : No overlay (40s d'exercice visible)
-    - 105-120s : Break classic overlay (15s)
+    EXERCICE 2 (vidéo 50-110s) :
+    - 50-55s : Break classic overlay suite (10s)
+    - 55-60s : Break transparent overlay (5s) - preview, vidéo visible dessous
+    - 60-100s : No overlay (40s d'exercice visible)
+    - 100-105s : Break classic overlay (5s)
 
-    EXERCICE 3 (vidéo 120-180s) :
-    - 120-125s : Break transparent overlay (5s)
-    - 125-165s : No overlay (40s d'exercice visible)
-    - 165-180s : Break classic overlay (15s)
+    EXERCICE 3 (vidéo 105-165s) :
+    - 105-110s : Break classic overlay suite (10s)
+    - 110-115s : Break transparent overlay (5s)
+    - 115-155s : No overlay (40s d'exercice visible)
+    - 155-160s : Break classic overlay (5s)
 
     DERNIER EXERCICE :
-    - 0-5s : Preview overlay
-    - 5-45s : No overlay (40s)
-    - 45-60s : rien (fin du workout)
+    - Suite break : 10s
+    - Preview overlay : 5s
+    - No overlay : 40s
+    - Rien : 15s
+
+    OUTRO (vidéo fin-5s) :
+    - 5s : Outro overlay (félicitations)
 
     Args:
         exercises: Liste des exercices à inclure dans le workout
@@ -465,33 +473,34 @@ def generate_workout_with_intervals(
     rest_time = config.intervals.get("rest_time", 20)
 
     PREVIEW_DURATION = 5  # Durée de la preview transparente
-    WARNING_DURATION = 5  # Durée du warning initial
     BREAK_CLASSIC_DURATION = rest_time - PREVIEW_DURATION  # 20 - 5 = 15s
+    INTRO_DURATION = 5  # Durée de l'intro (écran d'avertissement)
+    OUTRO_DURATION = 5  # Durée de l'outro (félicitations)
 
     workout_items = []
     order = 0
+
+    # INTRO - Écran d'avertissement avant le workout
+    workout_items.append(
+        {
+            "name": "Safety First",
+            "description": "Important safety information",
+            "icon": "⚠️",
+            "duration": INTRO_DURATION,
+            "order": order,
+            "overlay_type": "intro",
+            "is_break": False,
+            "exercise_id": "intro",
+        }
+    )
+    order += 1
 
     for idx, exercise in enumerate(exercises):
         is_first = idx == 0
         is_last = idx == len(exercises) - 1
 
         if is_first:
-            # EXERCICE 1 : Warning (5s) + No overlay (40s) + Break classic (15s)
-            workout_items.append(
-                {
-                    "name": "Get Ready!",
-                    "description": f"Préparez-vous pour {exercise.name}",
-                    "icon": "⚠️",
-                    "duration": WARNING_DURATION,
-                    "order": order,
-                    "overlay_type": "warning",
-                    "is_break": False,
-                    "exercise_id": exercise.id,
-                    "next_exercise_name": exercise.name,
-                }
-            )
-            order += 1
-
+            # EXERCICE 1 : No overlay (40s) + Break classic (15s)
             workout_items.append(
                 {
                     "name": exercise.name,
@@ -579,6 +588,20 @@ def generate_workout_with_intervals(
                     }
                 )
                 order += 1
+
+    # OUTRO - Félicitations à la fin du workout
+    workout_items.append(
+        {
+            "name": "Well Done!",
+            "description": "Congratulations on completing your workout",
+            "icon": "🎉",
+            "duration": OUTRO_DURATION,
+            "order": order,
+            "overlay_type": "outro",
+            "is_break": False,
+            "exercise_id": "outro",
+        }
+    )
 
     return workout_items
 
