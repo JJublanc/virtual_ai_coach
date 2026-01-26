@@ -12,6 +12,11 @@ interface WorkoutExercise {
   duration: number
   order: number
   is_break?: boolean
+  overlay_type?: 'intro' | 'none' | 'break_classic' | 'break_transparent' | 'outro'
+  next_exercise_name?: string
+  next_exercise_icon?: string
+  next_exercise_duration?: number
+  exercise_id?: string
 }
 
 interface VideoPlayerProps {
@@ -76,8 +81,8 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
   // Effect to handle countdown beeps for last 5 seconds
   useEffect(() => {
-    // Only beep for exercises, not breaks
-    if (currentExercise && !currentExercise.is_break && exerciseTimeRemaining > 0 && exerciseTimeRemaining <= 5) {
+    // Only beep for exercises (overlay_type === 'none'), not breaks or warnings
+    if (currentExercise && currentExercise.overlay_type === 'none' && exerciseTimeRemaining > 0 && exerciseTimeRemaining <= 5) {
       // Check if we haven't beeped for this second yet
       if (lastBeepSecond !== exerciseTimeRemaining) {
         playBeep()
@@ -146,13 +151,20 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       if (workoutExercises.length > 0) {
         let cumulativeTime = 0
         let exerciseCount = 0 // Count only non-break exercises
+
+        console.log(`[VideoPlayer] Time: ${time.toFixed(2)}s, Total segments: ${workoutExercises.length}`)
+
         for (let i = 0; i < workoutExercises.length; i++) {
           const exercise = workoutExercises[i]
           const exerciseEndTime = cumulativeTime + exercise.duration
+
+          console.log(`[VideoPlayer] Segment ${i}: ${exercise.name} (${exercise.overlay_type}), Time range: ${cumulativeTime}-${exerciseEndTime}s`)
+
           if (time >= cumulativeTime && time < exerciseEndTime) {
+            console.log(`[VideoPlayer] ✓ Active segment: ${exercise.name} (${exercise.overlay_type})`)
             setCurrentExercise(exercise)
-            // Only increment exercise count for non-break exercises
-            if (!exercise.is_break) {
+            // Only increment exercise count for actual exercises (not intro/outro/breaks/previews)
+            if (exercise.overlay_type === 'none') {
               exerciseCount++
             }
             setCurrentExerciseIndex(exerciseCount)
@@ -166,8 +178,8 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             break
           }
           cumulativeTime += exercise.duration
-          // Count non-break exercises that have passed
-          if (!exercise.is_break) {
+          // Count actual exercises that have passed (not intro/outro/breaks/previews)
+          if (exercise.overlay_type === 'none') {
             exerciseCount++
           }
         }
@@ -279,8 +291,59 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       {/* Video controls - only if video available and ready to play */}
       {videoUrl && !isGenerating && !error && canPlay && (
         <>
-          {/* BREAK overlay during rest periods */}
-          {currentExercise?.is_break && (
+          {/* INTRO overlay - safety warning at the start of workout */}
+          {currentExercise?.overlay_type === 'intro' && (
+            <div className="absolute inset-0 z-10 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+              {/* Centered content */}
+              <div className="absolute inset-0 flex items-center justify-center px-8">
+                <div className="max-w-4xl text-center space-y-6">
+                  <h1 className="text-6xl font-bold text-red-500 mb-8 tracking-wider">
+                    WARNING
+                  </h1>
+                  <p className="text-2xl text-white/90 leading-relaxed">
+                    Before starting a workout, make sure you are fit enough to do cardio exercise.
+                  </p>
+                  <p className="text-2xl text-white/90 leading-relaxed">
+                    Don't hesitate to consult your doctor if you have any doubt.
+                  </p>
+                  <p className="text-2xl text-white/90 leading-relaxed">
+                    Stop immediately if you feel unwell during a session.
+                  </p>
+                  <p className="text-2xl text-white/90 leading-relaxed">
+                    Remember to stay hydrated and take as many breaks as needed.
+                  </p>
+                  <p className="text-2xl text-white/90 leading-relaxed">
+                    It is highly recommended to warm up before a workout and stretch afterward.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OUTRO overlay - congratulations at the end */}
+          {currentExercise?.overlay_type === 'outro' && (
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                backgroundImage: 'url(/sport_room.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Semi-transparent overlay */}
+              <div className="absolute inset-0 bg-black/20" />
+
+              {/* Congratulations text */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <h1 className="text-9xl font-bold text-white tracking-wider drop-shadow-2xl">
+                  Congratulations!
+                </h1>
+              </div>
+            </div>
+          )}
+
+          {/* BREAK CLASSIC overlay - opaque break screen */}
+          {currentExercise?.overlay_type === 'break_classic' && (
             <div
               className="absolute inset-0 z-10"
               style={{
@@ -293,27 +356,23 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
               {/* Next exercise indicator - top left */}
-              {(() => {
-                const nextExercise = workoutExercises[currentExerciseIndex]
-                if (nextExercise && !nextExercise.is_break) {
-                  const NextIconComponent = getExerciseIcon(nextExercise.name)
-                  return (
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-sm shadow-2xl">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Next up</p>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <NextIconComponent className="w-6 h-6 text-green-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-lg text-gray-900 truncate">{nextExercise.name}</h3>
-                          <p className="text-sm text-gray-600">{nextExercise.duration}s</p>
-                        </div>
-                      </div>
+              {currentExercise.next_exercise_name && (
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-sm shadow-2xl">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Next up</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      {(() => {
+                        const NextIconComponent = getExerciseIcon(currentExercise.next_exercise_name)
+                        return <NextIconComponent className="w-6 h-6 text-green-600" />
+                      })()}
                     </div>
-                  )
-                }
-                return null
-              })()}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg text-gray-900 truncate">{currentExercise.next_exercise_name}</h3>
+                      <p className="text-sm text-gray-600">{currentExercise.next_exercise_duration}s</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Centered content */}
               <div className="absolute inset-0 flex items-center justify-center">
@@ -322,7 +381,11 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                     BREAK
                   </h1>
                   <div className="text-7xl font-mono text-blue-400 font-bold drop-shadow-lg">
-                    {Math.floor(exerciseTimeRemaining / 60)}:{(exerciseTimeRemaining % 60).toString().padStart(2, '0')}
+                    {(() => {
+                      // Add 5 seconds to show countdown from 20 to 5 (including upcoming preview)
+                      const totalBreakTime = exerciseTimeRemaining + 5
+                      return `${Math.floor(totalBreakTime / 60)}:${(totalBreakTime % 60).toString().padStart(2, '0')}`
+                    })()}
                   </div>
                   <p className="text-3xl text-white/90 mt-6 drop-shadow-lg">
                     Recovery in progress...
@@ -332,9 +395,47 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             </div>
           )}
 
-          {/* Exercise description overlay - top left - hidden during breaks */}
-          {!currentExercise?.is_break && (
-            <div className="absolute top-4 left-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 w-80 transition-all duration-300">
+          {/* BREAK TRANSPARENT overlay - preview of next exercise */}
+          {currentExercise?.overlay_type === 'break_transparent' && (
+            <div className="absolute inset-0 z-10">
+              {/* Transparent overlay (20% opacity = 80% transparent) to show video underneath */}
+              <div className="absolute inset-0 bg-black/20" />
+
+              {/* Next exercise indicator - top left (same position as break classic) */}
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 max-w-sm shadow-2xl">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Next up</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    {(() => {
+                      const NextIconComponent = getExerciseIcon(currentExercise.next_exercise_name || '')
+                      return <NextIconComponent className="w-6 h-6 text-green-600" />
+                    })()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg text-gray-900 truncate">{currentExercise.next_exercise_name}</h3>
+                    <p className="text-sm text-gray-600">Get ready!</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Countdown - centered and prominent for preview (5 to 0) */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-8xl font-mono text-green-400 font-bold drop-shadow-2xl">
+                    {exerciseTimeRemaining}
+                  </div>
+                  <p className="text-2xl text-white/90 mt-4 drop-shadow-lg">
+                    Get ready...
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* NO OVERLAY - clean view during exercise (overlay_type === 'none') */}
+          {/* Only show exercise description for 'none' overlay type */}
+          {currentExercise?.overlay_type === 'none' && (
+            <div className="absolute top-4 left-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 w-80 transition-all duration-300 z-20">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {(() => {
@@ -362,8 +463,9 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             </div>
           )}
 
-          {/* Timer circle - top right - dynamic color based on break or exercise */}
-          <div className="absolute top-4 right-4">
+          {/* Timer circle - top right - only visible during exercises */}
+          {currentExercise?.overlay_type === 'none' && (
+          <div className="absolute top-4 right-4 z-20">
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
                 <circle
@@ -374,12 +476,12 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                   strokeWidth="8"
                   fill="none"
                 />
-                {/* Progress circle - dynamic color */}
+                {/* Progress circle - green for exercises */}
                 <circle
                   cx="48"
                   cy="48"
                   r="40"
-                  stroke={currentExercise?.is_break ? "#60a5fa" : "#4ade80"}
+                  stroke="#4ade80"
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 40}`}
@@ -388,7 +490,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`text-2xl font-bold ${currentExercise?.is_break ? 'text-blue-400' : 'text-white'}`}>
+                <span className="text-2xl font-bold text-white">
                   {exerciseTimeRemaining > 0 ? exerciseTimeRemaining : '0'}
                 </span>
               </div>
@@ -397,13 +499,14 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
             {/* Current exercise indicator - below timer */}
             <div className="mt-2 text-center">
               <span className="text-white text-sm font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
-                {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.filter(ex => !ex.is_break).length}` : '1 / -'}
+                {workoutExercises.length > 0 ? `${currentExerciseIndex} / ${workoutExercises.filter(ex => ex.overlay_type === 'none').length}` : '1 / -'}
               </span>
             </div>
           </div>
+          )}
 
           {/* Progress bar - bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
             <div className="flex items-center justify-between mb-2">
               {/* Elapsed time on the left */}
               <span className="text-white text-sm font-medium">

@@ -421,62 +421,187 @@ def generate_workout_with_intervals(
     exercises: List[Exercise], config: WorkoutConfig
 ) -> List[Dict]:
     """
-    Génère la liste de WorkoutExercise en alternant exercices et breaks.
+    Génère la liste de segments d'overlay synchronisés avec la timeline vidéo réelle.
 
-    Cette fonction crée la séquence complète d'un workout incluant :
-    - Les exercices avec leur durée de travail (work_time)
-    - Les périodes de repos (breaks) entre chaque exercice
+    IMPORTANT : Chaque exercice dans la vidéo dure work_time + rest_time (ex: 40 + 20 = 60s).
+    Les overlays créent visuellement les temps de pause et les previews.
+
+    Timeline réelle pour work_time=40s, rest_time=20s (exercices de 60s chacun) :
+
+    INTRO (vidéo 0-5s) :
+    - 0-5s : Intro overlay (avertissement sécurité)
+
+    EXERCICE 1 (vidéo 5-50s) :
+    - 5-45s : No overlay (40s d'exercice visible)
+    - 45-50s : Break classic overlay (5s)
+
+    EXERCICE 2 (vidéo 50-110s) :
+    - 50-55s : Break classic overlay suite (10s)
+    - 55-60s : Break transparent overlay (5s) - preview, vidéo visible dessous
+    - 60-100s : No overlay (40s d'exercice visible)
+    - 100-105s : Break classic overlay (5s)
+
+    EXERCICE 3 (vidéo 105-165s) :
+    - 105-110s : Break classic overlay suite (10s)
+    - 110-115s : Break transparent overlay (5s)
+    - 115-155s : No overlay (40s d'exercice visible)
+    - 155-160s : Break classic overlay (5s)
+
+    DERNIER EXERCICE :
+    - Suite break : 10s
+    - Preview overlay : 5s
+    - No overlay : 40s
+    - Rien : 15s
+
+    OUTRO (vidéo fin-5s) :
+    - 5s : Outro overlay (félicitations)
 
     Args:
         exercises: Liste des exercices à inclure dans le workout
         config: Configuration du workout avec les intervals work_time/rest_time
 
     Returns:
-        Liste de dictionnaires avec structure :
-        [Exercice1, Break1, Exercice2, Break2, ...]
+        Liste de dictionnaires avec structure détaillée des overlays alignés sur la vidéo
 
     Example:
-        >>> exercises = [exercise1, exercise2]
+        >>> exercises = [exercise1, exercise2, exercise3]
         >>> config = WorkoutConfig(intervals={"work_time": 40, "rest_time": 20})
         >>> result = generate_workout_with_intervals(exercises, config)
-        >>> len(result)
-        3  # exercise1, break1, exercise2 (pas de break après le dernier)
+        >>> # Total durée = 180s (3 exercices × 60s chacun)
     """
     work_time = config.intervals.get("work_time", 40)
     rest_time = config.intervals.get("rest_time", 20)
 
+    PREVIEW_DURATION = 5  # Durée de la preview transparente
+    BREAK_CLASSIC_DURATION = rest_time - PREVIEW_DURATION  # 20 - 5 = 15s
+    INTRO_DURATION = 5  # Durée de l'intro (écran d'avertissement)
+    OUTRO_DURATION = 5  # Durée de l'outro (félicitations)
+
     workout_items = []
     order = 0
 
-    for idx, exercise in enumerate(exercises):
-        # Ajouter l'exercice
-        workout_items.append(
-            {
-                "name": exercise.name,
-                "description": exercise.description or f"Exercice {exercise.name}",
-                "icon": getattr(exercise, "icon", "🏋️"),
-                "duration": work_time,
-                "order": order,
-                "is_break": False,
-                "exercise_id": exercise.id,
-            }
-        )
-        order += 1
+    # INTRO - Écran d'avertissement avant le workout
+    workout_items.append(
+        {
+            "name": "Safety First",
+            "description": "Important safety information",
+            "icon": "⚠️",
+            "duration": INTRO_DURATION,
+            "order": order,
+            "overlay_type": "intro",
+            "is_break": False,
+            "exercise_id": "intro",
+        }
+    )
+    order += 1
 
-        # Ajouter un break (sauf après le dernier exercice)
-        if idx < len(exercises) - 1:
+    for idx, exercise in enumerate(exercises):
+        is_first = idx == 0
+        is_last = idx == len(exercises) - 1
+
+        if is_first:
+            # EXERCICE 1 : No overlay (40s) + Break classic (15s)
             workout_items.append(
                 {
-                    "name": "Break",
-                    "description": "Période de récupération",
-                    "icon": "⏸️",
-                    "duration": rest_time,
+                    "name": exercise.name,
+                    "description": exercise.description or f"Exercice {exercise.name}",
+                    "icon": getattr(exercise, "icon", "🏋️"),
+                    "duration": work_time,
                     "order": order,
-                    "is_break": True,
-                    "exercise_id": "break",
+                    "overlay_type": "none",
+                    "is_break": False,
+                    "exercise_id": exercise.id,
                 }
             )
             order += 1
+
+            # Break classic sauf si c'est le dernier exercice
+            if not is_last:
+                workout_items.append(
+                    {
+                        "name": "Break",
+                        "description": "Période de récupération",
+                        "icon": "⏸️",
+                        "duration": BREAK_CLASSIC_DURATION,
+                        "order": order,
+                        "overlay_type": "break_classic",
+                        "is_break": True,
+                        "exercise_id": "break",
+                        "next_exercise_name": exercises[idx + 1].name
+                        if idx + 1 < len(exercises)
+                        else "",
+                        "next_exercise_duration": work_time,
+                    }
+                )
+                order += 1
+        else:
+            # EXERCICES SUIVANTS : Preview (5s) + No overlay (40s) + Break classic (15s)
+
+            # 1. Preview transparent overlay (5s) - fin du break, début de l'exercice
+            workout_items.append(
+                {
+                    "name": "Next Up",
+                    "description": f"Prochain : {exercise.name}",
+                    "icon": "👁️",
+                    "duration": PREVIEW_DURATION,
+                    "order": order,
+                    "overlay_type": "break_transparent",
+                    "is_break": True,
+                    "exercise_id": "preview",
+                    "next_exercise_name": exercise.name,
+                    "next_exercise_icon": getattr(exercise, "icon", "🏋️"),
+                }
+            )
+            order += 1
+
+            # 2. No overlay pour l'exercice (40s)
+            workout_items.append(
+                {
+                    "name": exercise.name,
+                    "description": exercise.description or f"Exercice {exercise.name}",
+                    "icon": getattr(exercise, "icon", "🏋️"),
+                    "duration": work_time,
+                    "order": order,
+                    "overlay_type": "none",
+                    "is_break": False,
+                    "exercise_id": exercise.id,
+                }
+            )
+            order += 1
+
+            # 3. Break classic (15s) sauf si c'est le dernier exercice
+            if not is_last:
+                workout_items.append(
+                    {
+                        "name": "Break",
+                        "description": "Période de récupération",
+                        "icon": "⏸️",
+                        "duration": BREAK_CLASSIC_DURATION,
+                        "order": order,
+                        "overlay_type": "break_classic",
+                        "is_break": True,
+                        "exercise_id": "break",
+                        "next_exercise_name": exercises[idx + 1].name
+                        if idx + 1 < len(exercises)
+                        else "",
+                        "next_exercise_duration": work_time,
+                    }
+                )
+                order += 1
+
+    # OUTRO - Félicitations à la fin du workout
+    workout_items.append(
+        {
+            "name": "Well Done!",
+            "description": "Congratulations on completing your workout",
+            "icon": "🎉",
+            "duration": OUTRO_DURATION,
+            "order": order,
+            "overlay_type": "outro",
+            "is_break": False,
+            "exercise_id": "outro",
+        }
+    )
 
     return workout_items
 
