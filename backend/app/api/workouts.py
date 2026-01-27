@@ -892,23 +892,48 @@ async def stream_workout_progressive(workout_data):
 
         # Lire stderr en arrière-plan pour capturer les erreurs
         async def read_stderr():
-            stderr_data = []
-            while True:
-                line = await process.stderr.readline()
-                if not line:
-                    break
-                decoded_line = line.decode("utf-8", errors="replace").strip()
-                if decoded_line:
-                    stderr_data.append(decoded_line)
-                    # Log les erreurs importantes
-                    if (
-                        "error" in decoded_line.lower()
-                        or "no such file" in decoded_line.lower()
-                    ):
-                        logger.error(f"FFmpeg stderr: {decoded_line}")
-                    elif "warning" in decoded_line.lower():
-                        logger.warning(f"FFmpeg stderr: {decoded_line}")
-            return "\n".join(stderr_data)
+            """
+            Lit stderr par chunks pour éviter le LimitOverrunError.
+            Ne stocke pas tous les logs pour éviter une consommation mémoire excessive.
+            """
+            try:
+                error_count = 0
+                warning_count = 0
+
+                while True:
+                    # Lire par chunks de 8KB au lieu de readline()
+                    # Cela évite le problème de "Separator is not found, and chunk exceed the limit"
+                    chunk = await process.stderr.read(8192)
+                    if not chunk:
+                        break
+
+                    # Décoder et traiter le chunk
+                    decoded = chunk.decode("utf-8", errors="replace")
+
+                    # Parser les lignes pour logger seulement ce qui est important
+                    for line in decoded.split("\n"):
+                        line = line.strip()
+                        if not line:
+                            continue
+
+                        # Logger seulement les erreurs et warnings, pas tout
+                        line_lower = line.lower()
+                        if "error" in line_lower or "no such file" in line_lower:
+                            logger.error(f"FFmpeg stderr: {line}")
+                            error_count += 1
+                        elif "warning" in line_lower:
+                            logger.warning(f"FFmpeg stderr: {line}")
+                            warning_count += 1
+                        # Les messages de progression (frame=xxx) ne sont pas loggés
+
+                logger.info(
+                    f"FFmpeg terminé - Errors: {error_count}, Warnings: {warning_count}"
+                )
+                return f"Errors: {error_count}, Warnings: {warning_count}"
+
+            except Exception as e:
+                logger.error(f"Erreur lors de la lecture de stderr FFmpeg: {e}")
+                return f"Error reading stderr: {e}"
 
         # Démarrer la lecture de stderr en arrière-plan
         stderr_task = asyncio.create_task(read_stderr())
