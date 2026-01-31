@@ -140,7 +140,7 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
       if (document.hidden) {
         console.log('[VideoPlayer] 👁️ Tab hidden - keeping video playing in background')
         // Save the playing state before hiding
-        wasPlayingBeforeHidden.current = isPlaying && videoRef.current && !videoRef.current.paused
+        wasPlayingBeforeHidden.current = !!(isPlaying && videoRef.current && !videoRef.current.paused)
 
         // Try to keep video playing even in background
         if (wasPlayingBeforeHidden.current) {
