@@ -347,9 +347,6 @@ async def generate_workout_video(request: GenerateVideoRequest):
         # 4. Construire la commande FFmpeg pour le streaming
         # Note: On va utiliser stdout pour le streaming, donc on utilise 'pipe:1'
         # On modifie légèrement la commande pour écrire sur stdout
-        speed = video_service.get_speed_multiplier(request.config.intensity)
-        logger.debug(f"Multiplicateur de vitesse: {speed}x")
-
         # Préparer les chemins des vidéos et créer le fichier de concat
         temp_dir = Path(tempfile.gettempdir())
         import os
@@ -391,26 +388,17 @@ async def generate_workout_video(request: GenerateVideoRequest):
             str(concat_file),
         ]
 
-        # Ajout du filtre de vitesse si nécessaire
-        if speed != 1.0:
-            pts_value = 1.0 / speed
-            command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-        # Options de sortie optimisées pour le streaming vers stdout
+        # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
         command.extend(
             [
-                "-c:v",
-                "libx264",
-                "-preset",
-                "ultrafast",
-                "-pix_fmt",
-                "yuv420p",
+                "-c",
+                "copy",
                 "-movflags",
                 "frag_keyframe+empty_moov",
                 "-f",
-                "mp4",  # Format MP4
-                "-an",  # Pas d'audio
-                "pipe:1",  # Écrire vers stdout
+                "mp4",
+                "-an",
+                "pipe:1",
             ]
         )
 
@@ -551,9 +539,6 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         video_service = get_video_service()
 
         # 5. Préparer la commande FFmpeg pour le streaming
-        speed = video_service.get_speed_multiplier(request.config.intensity)
-        logger.debug(f"Multiplicateur de vitesse: {speed}x")
-
         # Créer le fichier de concaténation temporaire
         temp_dir = Path(tempfile.gettempdir())
         import os
@@ -595,26 +580,17 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
             str(concat_file),
         ]
 
-        # Ajout du filtre de vitesse si nécessaire
-        if speed != 1.0:
-            pts_value = 1.0 / speed
-            command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-        # Options de sortie optimisées pour le streaming
+        # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
         command.extend(
             [
-                "-c:v",
-                "libx264",
-                "-preset",
-                "ultrafast",
-                "-pix_fmt",
-                "yuv420p",
+                "-c",
+                "copy",
                 "-movflags",
                 "frag_keyframe+empty_moov",
                 "-f",
                 "mp4",
-                "-an",  # Pas d'audio
-                "pipe:1",  # Écrire vers stdout
+                "-an",
+                "pipe:1",
             ]
         )
 
@@ -1142,8 +1118,6 @@ def build_optimized_ffmpeg_command(workout_data):
     logger.debug(f"Fichier de concaténation créé: {concat_file}")
 
     # Construire la commande FFmpeg pour streaming vers stdout
-    speed = video_service.get_speed_multiplier(config.intensity)
-
     command = [
         "ffmpeg",
         "-f",
@@ -1154,20 +1128,11 @@ def build_optimized_ffmpeg_command(workout_data):
         str(concat_file),
     ]
 
-    # Ajout du filtre de vitesse si nécessaire
-    if speed != 1.0:
-        pts_value = 1.0 / speed
-        command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-    # Options de sortie optimisées pour le streaming vers stdout
+    # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
     command.extend(
         [
-            "-c:v",
-            "libx264",
-            "-preset",
-            "ultrafast",
-            "-pix_fmt",
-            "yuv420p",
+            "-c",
+            "copy",
             "-movflags",
             "frag_keyframe+empty_moov",
             "-f",
