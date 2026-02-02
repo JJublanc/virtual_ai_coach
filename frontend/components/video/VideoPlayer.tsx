@@ -59,10 +59,23 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     }
   }, [videoUrl])
 
+  // Shared AudioContext instance to avoid creating multiple contexts
+  const audioContextRef = useRef<AudioContext | null>(null)
+
   // Function to play beep sound using Web Audio API
   const playBeep = (frequency: number = 800, duration: number = 350) => {
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+
+      const audioContext = audioContextRef.current
+
+      // Resume if suspended (e.g. after autoplay policy block)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume()
+      }
+
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
