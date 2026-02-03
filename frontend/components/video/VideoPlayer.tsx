@@ -47,6 +47,9 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(false)
   const [canPlay, setCanPlay] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
+  const [bufferingStartTime, setBufferingStartTime] = useState<number | null>(null)
+  const wasPlayingBeforeHidden = useRef(false)
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
@@ -56,10 +59,23 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     }
   }, [videoUrl])
 
+  // Shared AudioContext instance to avoid creating multiple contexts
+  const audioContextRef = useRef<AudioContext | null>(null)
+
   // Function to play beep sound using Web Audio API
   const playBeep = (frequency: number = 800, duration: number = 350) => {
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+
+      const audioContext = audioContextRef.current
+
+      // Resume if suspended (e.g. after autoplay policy block)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume()
+      }
+
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
@@ -130,6 +146,42 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
+
+  // Keep video playing even when tab is in background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('[VideoPlayer] 👁️ Tab hidden - keeping video playing in background')
+        // Save the playing state before hiding
+        wasPlayingBeforeHidden.current = !!(isPlaying && videoRef.current && !videoRef.current.paused)
+
+        // Try to keep video playing even in background
+        if (wasPlayingBeforeHidden.current) {
+          setTimeout(() => {
+            if (videoRef.current && videoRef.current.paused) {
+              console.log('[VideoPlayer] ▶️ Resuming video in background')
+              videoRef.current.play().catch(err => {
+                console.warn('[VideoPlayer] Could not resume video in background:', err)
+              })
+            }
+          }, 100)
+        }
+      } else {
+        console.log('[VideoPlayer] 👁️ Tab visible again')
+        // Resume video if it was playing before being hidden
+        if (wasPlayingBeforeHidden.current && videoRef.current && videoRef.current.paused) {
+          console.log('[VideoPlayer] ▶️ Resuming video after returning to tab')
+          videoRef.current.play().catch(err => {
+            console.warn('[VideoPlayer] Could not resume video:', err)
+          })
+        }
+        wasPlayingBeforeHidden.current = false
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [isPlaying])
 
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -206,12 +258,59 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
   }
 
   const handleWaiting = () => {
-    // Ne rien faire - on ne veut pas bloquer la lecture pendant les micro-bufferings
+    // La vidéo attend des données (buffering)
+    console.log('[VideoPlayer] 🔄 WAITING - Video is buffering')
+    setIsBuffering(true)
+    setBufferingStartTime(Date.now())
   }
 
   const handlePlaying = () => {
     // La vidéo joue, s'assurer que le loading initial est terminé
+    console.log('[VideoPlayer] ▶️ PLAYING - Video is playing')
     setIsInitialLoading(false)
+
+    // Log buffering duration if it was buffering
+    if (isBuffering && bufferingStartTime) {
+      const bufferingDuration = Date.now() - bufferingStartTime
+      console.log(`[VideoPlayer] ✅ Buffering ended after ${bufferingDuration}ms`)
+    }
+    setIsBuffering(false)
+    setBufferingStartTime(null)
+  }
+
+  const handleStalled = () => {
+    console.log('[VideoPlayer] ⚠️ STALLED - Browser is trying to fetch data but nothing is arriving')
+    setIsBuffering(true)
+  }
+
+  const handleSuspend = () => {
+    console.log('[VideoPlayer] ⏸️ SUSPEND - Browser suspended media data loading')
+  }
+
+  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const video = e.currentTarget
+    const error = video.error
+    if (error) {
+      console.error('[VideoPlayer] ❌ VIDEO ERROR:', {
+        code: error.code,
+        message: error.message,
+        currentTime: video.currentTime,
+        readyState: video.readyState,
+        networkState: video.networkState
+      })
+    }
+  }
+
+  const handleProgress = () => {
+    if (videoRef.current) {
+      const buffered = videoRef.current.buffered
+      if (buffered.length > 0) {
+        const bufferedEnd = buffered.end(buffered.length - 1)
+        const duration = videoRef.current.duration
+        const bufferedPercent = (bufferedEnd / duration) * 100
+        console.log(`[VideoPlayer] 📊 PROGRESS - Buffered: ${bufferedPercent.toFixed(1)}% (${bufferedEnd.toFixed(1)}s / ${duration.toFixed(1)}s)`)
+      }
+    }
   }
 
   // Update duration when workoutInfo changes
@@ -237,11 +336,26 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
           className="w-full h-full object-cover"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPlay={() => {
+            console.log('[VideoPlayer] ▶️ onPlay event')
+            setIsPlaying(true)
+          }}
+          onPause={() => {
+            // Don't update isPlaying if tab is hidden (automatic browser pause)
+            if (!document.hidden) {
+              console.log('[VideoPlayer] ⏸️ onPause event (user action)')
+              setIsPlaying(false)
+            } else {
+              console.log('[VideoPlayer] ⏸️ onPause event (ignored - tab hidden)')
+            }
+          }}
           onCanPlay={handleCanPlay}
           onWaiting={handleWaiting}
           onPlaying={handlePlaying}
+          onStalled={handleStalled}
+          onSuspend={handleSuspend}
+          onError={handleError}
+          onProgress={handleProgress}
         >
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support video playback.
@@ -252,11 +366,20 @@ export function VideoPlayer({ videoUrl, isGenerating = false, progress = 0, erro
 
       {/* Buffering state - show loading only during initial load */}
       {videoUrl && isInitialLoading && !canPlay && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-30">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-900" />
             <p className="text-gray-900 font-medium mb-2">Loading video...</p>
             <p className="text-sm text-gray-600">Preparing your workout</p>
+          </div>
+        </div>
+      )}
+
+      {/* Buffering indicator - show when video is buffering during playback */}
+      {videoUrl && !isInitialLoading && isBuffering && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+          <div className="bg-black/70 backdrop-blur-sm rounded-full p-4">
+            <Loader2 className="w-12 h-12 animate-spin text-white" />
           </div>
         </div>
       )}

@@ -347,9 +347,6 @@ async def generate_workout_video(request: GenerateVideoRequest):
         # 4. Construire la commande FFmpeg pour le streaming
         # Note: On va utiliser stdout pour le streaming, donc on utilise 'pipe:1'
         # On modifie légèrement la commande pour écrire sur stdout
-        speed = video_service.get_speed_multiplier(request.config.intensity)
-        logger.debug(f"Multiplicateur de vitesse: {speed}x")
-
         # Préparer les chemins des vidéos et créer le fichier de concat
         temp_dir = Path(tempfile.gettempdir())
         import os
@@ -391,26 +388,17 @@ async def generate_workout_video(request: GenerateVideoRequest):
             str(concat_file),
         ]
 
-        # Ajout du filtre de vitesse si nécessaire
-        if speed != 1.0:
-            pts_value = 1.0 / speed
-            command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-        # Options de sortie optimisées pour le streaming vers stdout
+        # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
         command.extend(
             [
-                "-c:v",
-                "libx264",
-                "-preset",
-                "ultrafast",
-                "-pix_fmt",
-                "yuv420p",
+                "-c",
+                "copy",
                 "-movflags",
                 "frag_keyframe+empty_moov",
                 "-f",
-                "mp4",  # Format MP4
-                "-an",  # Pas d'audio
-                "pipe:1",  # Écrire vers stdout
+                "mp4",
+                "-an",
+                "pipe:1",
             ]
         )
 
@@ -551,9 +539,6 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
         video_service = get_video_service()
 
         # 5. Préparer la commande FFmpeg pour le streaming
-        speed = video_service.get_speed_multiplier(request.config.intensity)
-        logger.debug(f"Multiplicateur de vitesse: {speed}x")
-
         # Créer le fichier de concaténation temporaire
         temp_dir = Path(tempfile.gettempdir())
         import os
@@ -595,26 +580,17 @@ async def generate_auto_workout_video(request: GenerateWorkoutVideoRequest):
             str(concat_file),
         ]
 
-        # Ajout du filtre de vitesse si nécessaire
-        if speed != 1.0:
-            pts_value = 1.0 / speed
-            command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-        # Options de sortie optimisées pour le streaming
+        # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
         command.extend(
             [
-                "-c:v",
-                "libx264",
-                "-preset",
-                "ultrafast",
-                "-pix_fmt",
-                "yuv420p",
+                "-c",
+                "copy",
                 "-movflags",
                 "frag_keyframe+empty_moov",
                 "-f",
                 "mp4",
-                "-an",  # Pas d'audio
-                "pipe:1",  # Écrire vers stdout
+                "-an",
+                "pipe:1",
             ]
         )
 
@@ -892,23 +868,48 @@ async def stream_workout_progressive(workout_data):
 
         # Lire stderr en arrière-plan pour capturer les erreurs
         async def read_stderr():
-            stderr_data = []
-            while True:
-                line = await process.stderr.readline()
-                if not line:
-                    break
-                decoded_line = line.decode("utf-8", errors="replace").strip()
-                if decoded_line:
-                    stderr_data.append(decoded_line)
-                    # Log les erreurs importantes
-                    if (
-                        "error" in decoded_line.lower()
-                        or "no such file" in decoded_line.lower()
-                    ):
-                        logger.error(f"FFmpeg stderr: {decoded_line}")
-                    elif "warning" in decoded_line.lower():
-                        logger.warning(f"FFmpeg stderr: {decoded_line}")
-            return "\n".join(stderr_data)
+            """
+            Lit stderr par chunks pour éviter le LimitOverrunError.
+            Ne stocke pas tous les logs pour éviter une consommation mémoire excessive.
+            """
+            try:
+                error_count = 0
+                warning_count = 0
+
+                while True:
+                    # Lire par chunks de 8KB au lieu de readline()
+                    # Cela évite le problème de "Separator is not found, and chunk exceed the limit"
+                    chunk = await process.stderr.read(8192)
+                    if not chunk:
+                        break
+
+                    # Décoder et traiter le chunk
+                    decoded = chunk.decode("utf-8", errors="replace")
+
+                    # Parser les lignes pour logger seulement ce qui est important
+                    for line in decoded.split("\n"):
+                        line = line.strip()
+                        if not line:
+                            continue
+
+                        # Logger seulement les erreurs et warnings, pas tout
+                        line_lower = line.lower()
+                        if "error" in line_lower or "no such file" in line_lower:
+                            logger.error(f"FFmpeg stderr: {line}")
+                            error_count += 1
+                        elif "warning" in line_lower:
+                            logger.warning(f"FFmpeg stderr: {line}")
+                            warning_count += 1
+                        # Les messages de progression (frame=xxx) ne sont pas loggés
+
+                logger.info(
+                    f"FFmpeg terminé - Errors: {error_count}, Warnings: {warning_count}"
+                )
+                return f"Errors: {error_count}, Warnings: {warning_count}"
+
+            except Exception as e:
+                logger.error(f"Erreur lors de la lecture de stderr FFmpeg: {e}")
+                return f"Error reading stderr: {e}"
 
         # Démarrer la lecture de stderr en arrière-plan
         stderr_task = asyncio.create_task(read_stderr())
@@ -1117,8 +1118,6 @@ def build_optimized_ffmpeg_command(workout_data):
     logger.debug(f"Fichier de concaténation créé: {concat_file}")
 
     # Construire la commande FFmpeg pour streaming vers stdout
-    speed = video_service.get_speed_multiplier(config.intensity)
-
     command = [
         "ffmpeg",
         "-f",
@@ -1129,20 +1128,11 @@ def build_optimized_ffmpeg_command(workout_data):
         str(concat_file),
     ]
 
-    # Ajout du filtre de vitesse si nécessaire
-    if speed != 1.0:
-        pts_value = 1.0 / speed
-        command.extend(["-filter:v", f"setpts={pts_value}*PTS"])
-
-    # Options de sortie optimisées pour le streaming vers stdout
+    # Stream copy — pas de ré-encodage, les vidéos sont déjà normalisées H.264 720p 30fps
     command.extend(
         [
-            "-c:v",
-            "libx264",
-            "-preset",
-            "ultrafast",
-            "-pix_fmt",
-            "yuv420p",
+            "-c",
+            "copy",
             "-movflags",
             "frag_keyframe+empty_moov",
             "-f",

@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/auth/'],
     },
-    sitemap: 'https://tyswee.com/sitemap.xml',
+    sitemap: 'https://workout-ai-coach.com/sitemap.xml',
   }
 }

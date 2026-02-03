@@ -12,7 +12,6 @@ import requests
 import shutil
 
 from ..models.exercise import Exercise
-from ..models.enums import Intensity
 
 # Configuration du logger
 logger = logging.getLogger(__name__)
@@ -20,13 +19,6 @@ logger = logging.getLogger(__name__)
 
 class VideoService:
     """Service de base pour la manipulation de vidéos d'entraînement"""
-
-    # Multiplicateurs de vitesse selon l'intensité
-    SPEED_MULTIPLIERS = {
-        Intensity.LOW_IMPACT: 0.8,  # 80% vitesse normale (plus lent)
-        Intensity.MEDIUM_INTENSITY: 1.0,  # Vitesse normale
-        Intensity.HIGH_INTENSITY: 1.2,  # 120% vitesse normale (plus rapide)
-    }
 
     def __init__(
         self,
@@ -62,20 +54,6 @@ class VideoService:
             f"VideoService initialisé avec project_root: {self.project_root}, "
             f"base_path: {self.base_video_path}, cache_dir: {self.video_cache_dir}"
         )
-
-    def get_speed_multiplier(self, intensity: Intensity) -> float:
-        """
-        Obtient le multiplicateur de vitesse selon l'intensité
-
-        Args:
-            intensity: Niveau d'intensité de l'entraînement
-
-        Returns:
-            float: Multiplicateur de vitesse (0.8 = plus lent, 1.2 = plus rapide)
-        """
-        multiplier = 1  # self.SPEED_MULTIPLIERS.get(intensity, 1.0)
-        logger.debug(f"Multiplicateur de vitesse pour {intensity}: {multiplier}")
-        return multiplier
 
     def _trim_video(self, input_path: Path, output_path: Path, duration: int) -> bool:
         """

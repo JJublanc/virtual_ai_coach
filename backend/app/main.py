@@ -27,6 +27,8 @@ ALLOWED_ORIGINS = [
     "https://virtual-ai-coach.vercel.app",
     "https://virtual-ai-coach-git-dev-johans-projects-1eb56e49.vercel.app",
     "https://tyswee.com",
+    "https://workout-ai-coach.com",
+    "https://www.workout-ai-coach.com",
 ]
 
 # Ajouter les domaines Vercel preview si configurés (séparés par des virgules)

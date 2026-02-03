@@ -49,3 +49,6 @@ videos_archives/
 videos_generated/
 workout_generation.log
 backend/break_videos/
+
+# Auto Claude data directory
+.auto-claude/
