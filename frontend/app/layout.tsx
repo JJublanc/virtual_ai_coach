@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Virtual AI Coach",
-    url: "https://tyswee.com",
+    url: "https://workout-ai-coach.com",
   },
   twitter: {
     card: "summary_large_image",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     creator: "@virtualaicoach",
   },
   alternates: {
-    canonical: "https://tyswee.com",
+    canonical: "https://workout-ai-coach.com",
   },
   category: "Health & Fitness",
 };
@@ -59,8 +59,8 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Virtual AI Coach",
-  "url": "https://tyswee.com",
-  "logo": "https://tyswee.com/sport_room.png",
+  "url": "https://workout-ai-coach.com",
+  "logo": "https://workout-ai-coach.com/sport_room.png",
   "description": "Free AI-powered virtual personal trainer providing personalized workout programs for all fitness levels",
   "foundingDate": "2024",
   "sameAs": [
@@ -72,18 +72,13 @@ const webApplicationSchema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "Virtual AI Coach",
-  "url": "https://tyswee.com",
+  "url": "https://workout-ai-coach.com",
   "applicationCategory": "HealthApplication",
   "operatingSystem": "Any",
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD"
-  },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "ratingCount": "150"
   },
   "description": "AI-powered personalized workout generator. Free virtual personal trainer for all fitness levels.",
   "featureList": [
