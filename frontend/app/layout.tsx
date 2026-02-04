@@ -20,6 +20,9 @@ const geistMono = Geist({
 });
 
 export const metadata: Metadata = {
+  verification: {
+    google: "H9f13dhDo3FRujW_z110nD2-Cb7wf3zwVbi_4a-b0ig",
+  },
   title: "Virtual AI Coach - Free AI Personal Trainer & Workout Generator",
   description: "Get motivated to exercise at your own pace with Virtual AI Coach. Free AI-powered personalized workout programs for all fitness levels. Build strength, get fitter, or lose weight with 100+ bodyweight exercises. No equipment needed, no judgment.",
   keywords: "AI personal trainer, virtual fitness coach, free workout generator, personalized exercise program, AI-powered fitness app, home workout planner, bodyweight training AI, custom workout creator, beginner-friendly fitness, adaptive training program, HIIT workout generator, strength training app, cardio workout planner, free fitness app",
