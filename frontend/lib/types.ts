@@ -23,7 +23,7 @@ export interface WorkoutExercise {
   custom_duration?: number // Override si différent du default
 }
 
-export type IntensityLevel = 'low_impact' | 'medium_intensity' | 'high_intensity'
+export type IntensityLevel = 'all' | 'low_impact' | 'medium_intensity' | 'high_intensity'
 
 export interface IntervalConfig {
   work_time: number // Temps d'activité en secondes (ex: 40)

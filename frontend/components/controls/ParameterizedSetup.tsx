@@ -94,16 +94,8 @@ export function ParameterizedSetup() {
         />
       </div>
 
-      {/* Intensity Checkboxes - Coming Soon Wrapper */}
-      <div className="relative">
-        <div className="pointer-events-none opacity-90">
-          <IntensityCheckboxes />
-        </div>
-        <div
-          onClick={() => openModal('Custom Intensity')}
-          className="absolute inset-0 cursor-pointer bg-white/30 hover:bg-white/40 transition-colors rounded-lg"
-        />
-      </div>
+      {/* Intensity Checkboxes */}
+      <IntensityCheckboxes />
 
       {/* Warmup Options - Coming Soon Wrapper */}
       <div className="relative">

@@ -50,7 +50,7 @@ const initialConfig: WorkoutConfig = {
   intervals: { work_time: 40, rest_time: 20 },
   no_repeat: false,
   no_jump: false,
-  intensity_levels: ['easy', 'medium', 'hard'],
+  intensity_levels: ['easy', 'medium'], // Synchronisé avec medium_intensity
   include_warm_up: false,
   include_cool_down: false,
 }
@@ -122,9 +122,25 @@ export const useTrainingStore = create<TrainingStore>()(
           })),
 
         setIntensity: (intensity) =>
-          set((state) => ({
-            config: { ...state.config, intensity },
-          })),
+          set((state) => {
+            // Synchroniser les niveaux de difficulté avec l'intensité globale
+            const intensityToLevels: Record<IntensityLevel, ('easy' | 'medium' | 'hard')[]> = {
+              all: ['easy', 'medium', 'hard'],
+              low_impact: ['easy'],
+              medium_intensity: ['easy', 'medium'],
+              high_intensity: ['medium', 'hard'],
+            }
+            // Low impact = pas de sauts
+            const noJump = intensity === 'low_impact' ? true : state.config.no_jump
+            return {
+              config: {
+                ...state.config,
+                intensity,
+                intensity_levels: intensityToLevels[intensity],
+                no_jump: noJump,
+              },
+            }
+          }),
 
         setIntervals: (intervals) =>
           set((state) => ({

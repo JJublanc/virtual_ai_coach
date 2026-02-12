@@ -9,6 +9,7 @@ class Status(str, Enum):
 
 
 class Intensity(str, Enum):
+    ALL = "all"
     LOW_IMPACT = "low_impact"
     MEDIUM_INTENSITY = "medium_intensity"
     HIGH_INTENSITY = "high_intensity"
